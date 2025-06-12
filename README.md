@@ -13,8 +13,8 @@ A Python project using **Pygame** to visualize different searching algorithms in
 ## Installation
 
 ```bash
-git clone https://github.com/your-username/your-repo-name.git
-cd your-repo-name
+git clone https://github.com/JoseLourencoFernandes/Pathfinding_Visualizer.git
+cd Pathfinding_Visualizer
 ```
 
 ## Create and activate a virtual environment:
