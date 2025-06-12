@@ -219,6 +219,7 @@ if __name__ == '__main__':
                         matrix.change_state(pos_y, pos_x, State.GOAL)
                         set_goal_mode = False
                         set_start_mode = False
+                        ignore_drag = True
                 
                 # If the button is pressed
                 for idx, button in enumerate(buttons):
