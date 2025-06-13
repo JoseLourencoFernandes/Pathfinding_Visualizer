@@ -1,7 +1,9 @@
 import heapq
+import random
 from definitions import State
 
-# Algorithm classes
+
+# Algorithm abstract class
 class Algorithm:
     def __init__(self, grid):
         self.grid = grid
@@ -37,6 +39,7 @@ class Algorithm:
                 yield n_row, n_col
 
 
+# Breadth-First Search (BFS) algorithm
 class BFSAlgorithm(Algorithm):
     def __init__(self, grid):
         super().__init__(grid)
@@ -70,6 +73,7 @@ class BFSAlgorithm(Algorithm):
         return True  # continue processing
 
 
+# Depth-First Search (DFS) algorithm
 class DFSAlgorithm(Algorithm):
     def __init__(self, grid):
         super().__init__(grid)
@@ -103,6 +107,7 @@ class DFSAlgorithm(Algorithm):
         return True  # continue processing
 
 
+# Dijkstra's algorithm
 class DijkstraAlgorithm(Algorithm):
     def __init__(self, grid):
         super().__init__(grid)
@@ -139,6 +144,8 @@ class DijkstraAlgorithm(Algorithm):
                         neighbor.change_state(State.FRONTIER)
         return True
 
+
+# A* algorithm
 class AStarAlgorithm(Algorithm):
     def __init__(self, grid):
         super().__init__(grid)
@@ -183,3 +190,79 @@ class AStarAlgorithm(Algorithm):
                     elif neighbor.state.is_activated():
                         neighbor.change_state(State.FRONTIER)
         return True
+    
+    
+# Greedy Best-First Search algorithm
+class GreedyBestFirstAlgorithm(Algorithm):
+    def __init__(self, grid):
+        super().__init__(grid)
+
+    def reset(self):
+        super().reset()
+        self.heap = []
+        start = self.grid.get_start()
+        goal = self.grid.get_goal()
+        self.goal = goal
+        if start and goal:
+            heapq.heappush(self.heap, (self.heuristic(start), start))
+            self.visited.add(start)
+            self.parents[start] = None
+
+    def heuristic(self, node):
+        # Manhattan distance
+        if not self.goal:
+            return 0
+        return abs(node[0] - self.goal[0]) + abs(node[1] - self.goal[1])
+
+    def step(self):
+        if not self.heap or self.found:
+            return False
+        _, (row, col) = heapq.heappop(self.heap)
+        square = self.grid.get(row, col)
+        if not square.state.is_start() and not square.state.is_goal():
+            square.change_state(State.VISITED)
+        for n_row, n_col in self._get_neighbors(row, col):
+            neighbor = self.grid.get(n_row, n_col)
+            if (n_row, n_col) not in self.visited and (neighbor.state.is_activated() or neighbor.state.is_goal()):
+                heapq.heappush(self.heap, (self.heuristic((n_row, n_col)), (n_row, n_col)))
+                self.visited.add((n_row, n_col))
+                self.parents[(n_row, n_col)] = (row, col)
+                if neighbor.state.is_goal():
+                    self.found = True
+                elif neighbor.state.is_activated():
+                    neighbor.change_state(State.FRONTIER)
+        return True
+    
+    
+# Maze Prim's algorithm for maze generation
+def generate_maze_prim(grid):
+    # Inicialize all squares as walls (deactivated)
+    for row in range(grid.height):
+        for col in range(grid.width):
+            grid.grid[row][col].change_state(State.DEACTIVATED)
+
+    # Choose a random starting point
+    start_row = random.randrange(0, grid.height, 2)
+    start_col = random.randrange(0, grid.width, 2)
+    grid.grid[start_row][start_col].change_state(State.ACTIVATED)
+
+    # List of walls to be processed
+    walls = []
+    for d_row, d_col in [(-2,0),(2,0),(0,-2),(0,2)]:
+        n_row, n_col = start_row + d_row, start_col + d_col
+        if 0 <= n_row < grid.height and 0 <= n_col < grid.width:
+            walls.append((start_row + d_row//2, start_col + d_col//2, n_row, n_col))
+
+    # Process walls until there are no more walls to process
+    while walls:
+        idx = random.randrange(len(walls))
+        wall_row, wall_col, n_row, n_col = walls.pop(idx)
+        if 0 <= n_row < grid.height and 0 <= n_col < grid.width:
+            if grid.grid[n_row][n_col].state == State.DEACTIVATED:
+                grid.grid[wall_row][wall_col].change_state(State.ACTIVATED)
+                grid.grid[n_row][n_col].change_state(State.ACTIVATED)
+                for d_row, d_col in [(-2,0),(2,0),(0,-2),(0,2)]:
+                    nn_row, nn_col = n_row + d_row, n_col + d_col
+                    if 0 <= nn_row < grid.height and 0 <= nn_col < grid.width:
+                        if grid.grid[nn_row][nn_col].state == State.DEACTIVATED:
+                            walls.append((n_row + d_row//2, n_col + d_col//2, nn_row, nn_col))

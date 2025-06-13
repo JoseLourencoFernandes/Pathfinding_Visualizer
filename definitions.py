@@ -4,17 +4,21 @@ from enum import Enum
 # Screen Constants
 SPACING = 5
 SCREEN_WIDTH = 1280
-SCREEN_HEIGHT = 705
+SCREEN_HEIGHT = 701
 
 # Button Constants
 BUTTON_WIDTH = 450
 BUTTON_HEIGHT = 50
 BUTTON_SPACING = 20
 BUTTON_X = SCREEN_WIDTH - BUTTON_WIDTH - (SCREEN_WIDTH - BUTTON_WIDTH - SCREEN_HEIGHT) / 2 
-BUTTON_Y = 50
+BUTTON_Y = 20
+
+# Time Text Constants
+TIME_TEXT_X = 3/2*(SCREEN_WIDTH - SCREEN_HEIGHT)
+TIME_TEXT_Y = 660
 
 # Square Constants
-SQUARE_SIZE = 20
+SQUARE_SIZE = 19
 
 # Color Constants
 class Color:
@@ -23,12 +27,13 @@ class Color:
     GREEN = (102, 205, 0)
     RED = (181, 42, 42)
     GRAY = (50, 50, 50)
-    BROWN = (205, 170, 125)
-    LIGHTGREEN = (144, 238, 144)
+    BROWN = (139,115,85)
+    LIGHTGREEN = (117, 238, 144)
     TOMATO = (255, 99, 71)
-    LIGHTBLUE = (202,225,255)
+    LIGHTBLUE = (64,198,246)
     PALEGREEN = (84,139,84)
     ORANGE = (255, 165, 0)
+    TANGERINE = (255,178,102)
     
 # State Enum to represent the state of each square
 class State(Enum):
