@@ -1,6 +1,11 @@
 from enum import Enum
 
-# Definitions of constants and classes used in the program
+"""
+Definitions of constants and classes used in the program.
+This module defines constants for screen dimensions, button sizes, 
+square sizes, color values, and the State Enum to represent the 
+state of each square in the grid.
+"""
 # Screen Constants
 SPACING = 5
 SCREEN_WIDTH = 1280
@@ -36,7 +41,7 @@ class Color:
     TANGERINE = (255,178,102)
     
 # State Enum to represent the state of each square
-class State(Enum):
+class SquareState(Enum):
     DEACTIVATED = 0
     ACTIVATED = 1
     START = 2
@@ -45,11 +50,23 @@ class State(Enum):
     PATH = 5
     FRONTIER = 6
     
+    def is_deactivated(self):
+        return self == SquareState.DEACTIVATED
+    
     def is_activated(self):
-        return self == State.ACTIVATED
+        return self == SquareState.ACTIVATED
     
     def is_start(self):
-        return self == State.START
+        return self == SquareState.START
     
     def is_goal(self):
-        return self == State.GOAL
+        return self == SquareState.GOAL
+    
+    def is_visited(self):
+        return self == SquareState.VISITED
+    
+    def is_path(self):
+        return self == SquareState.PATH
+    
+    def is_frontier(self):
+        return self == SquareState.FRONTIER
