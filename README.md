@@ -7,8 +7,10 @@ A Python project using **Pygame** to visualize different searching algorithms in
 - Interactive 2D grid creation
 - Start and goal point selection
 - Obstacle placement
-- Visualization of various pathfinding algorithms (e.g., BFS, DFS, A*, Dijkstra)
+- Visualization of various pathfinding algorithms (BFS, DFS, A*, Dijkstra and Greedy-Best-first search)
+- Maze generation (using Prim's algorithm)
 - Real-time animation using **Pygame**
+- Execution time tracking for algorithms
 
 ## Installation
 
@@ -39,10 +41,22 @@ python main.py
 ```
 
 ## Controls:
+
+### General
 - Left-click to create obstacles
 - Right-click to remove obstacles
 - Press designated buttons to set start and goal points
 - Choose an algorithm to see its execution
+- Press the **Maze button** to generate a randomized maze (using Prim's algorithm)
+  
+### Reset
+- **Reset button**:  
+  - First click → *partial reset* (restores the previously generated grid)  
+  - Second click → *full reset* (clears everything)  
+
+### Keyboard Shortcuts
+- `Ctrl + R` → Full reset  
+- `Ctrl + Q` → Quit application
 
 ## License
 This project is licensed under the Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC 4.0) License.
