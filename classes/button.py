@@ -1,5 +1,5 @@
 import pygame
-from definitions import Color
+from definitions.colors import Color
 
 class Button:
     """
@@ -15,17 +15,19 @@ class Button:
         text (str): The text displayed on the button.
         color (tuple): The color of the button in RGB format.
         text_color (tuple): The color of the text in RGB format.
+        icon (str): Optional icon to be displayed on the button.
         
     Methods:
         draw(surface, font, active): Draws the button on the given surface using the specified font.
         is_clicked(pos): Checks if the button is clicked based on the mouse position.
     """
     
-    def __init__(self, x, y, w, h, text, color= Color.GRAY, text_color= Color.BLACK):
+    def __init__(self, x, y, w, h, text = None, color= Color.GRAY, text_color= Color.BLACK, icon = None):
         self.rect = pygame.Rect(x, y, w, h)
         self.text = text
         self.color = color
         self.text_color = text_color
+        self.icon = icon
 
     def draw(self, screen, font, active = False):
         """
@@ -43,9 +45,16 @@ class Button:
             color = self.color
         pygame.draw.rect(screen, color, self.rect)
         pygame.draw.rect(screen, Color.BLACK, self.rect, 2)
-        text_surf = font.render(self.text, True, self.text_color)
-        text_rect = text_surf.get_rect(center=self.rect.center)
-        screen.blit(text_surf, text_rect)
+        #Draw text if provided
+        if self.text:
+            text_surf = font.render(self.text, True, self.text_color)
+            text_rect = text_surf.get_rect(center=self.rect.center)
+            screen.blit(text_surf, text_rect)
+
+        #Draw icon if provided
+        if self.icon:
+            icon_rect = self.icon.get_rect(center=self.rect.center)
+            screen.blit(self.icon, icon_rect)
 
     def is_clicked(self, pos):
         """

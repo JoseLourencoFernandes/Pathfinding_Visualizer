@@ -1,4 +1,22 @@
-class AppState:
+from definitions.global_constants import Screen
+
+class GlobalAppState:
+    """
+    Class to manage the global state of the application.
+    This class keeps track of the currently active screen and the state of the grid applications.
+    It contains instances of Grid2DAppState and Grid2DWeightedAppState to manage their respective states.
+    
+    Attributes:
+        currently_screen (Screen): The currently active screen in the application.
+        grid2d_app_state (Grid2DAppState): The state of the 2D grid application.
+        grid2d_weighted_app_state (Grid2DAppState): The state of the weighted 2D grid application.
+    """
+    def __init__(self):
+        self.currently_screen = Screen.MAIN_MENU
+        self.grid2d_app_state = Grid2DAppState()
+        self.grid2d_weighted_app_state = Grid2DAppState()
+
+class Grid2DAppState:
     """
     Class to manage the state of the application.
     This class keeps track of various flags and variables that control the behavior of the application.

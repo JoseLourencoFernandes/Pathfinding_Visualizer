@@ -1,5 +1,8 @@
 import pygame
-from definitions import Color, SquareState, SQUARE_SIZE, SPACING
+from definitions.grid_constants import SQUARE_SIZE, SPACING
+from definitions.colors import Color
+from definitions.states import SquareState
+from utils.loaders import load_grid_costs
 
 
 class Square:
@@ -13,39 +16,76 @@ class Square:
         y (int): The y-coordinate of the square's top-left corner.
         size (int): The size of the square (width and height).
         state (State): The current state of the square, represented by the State Enum.
-        
+        cost (int): The cost of the square (used for pathfinding algorithms).
+
     Methods:
         draw(screen): Draws the square on the given screen based on its state.
         change_state(new_state): Changes the state of the square to a new state.
     """
-    def __init__(self, x, y, size, state):
+    def __init__(self, x, y, size, state, cost=0):
         self.x = x
         self.y = y
         self.size = size
         self.state = state
+        self.cost = cost
+        self.cost_surface = None # Cache for cost surface to avoid re-rendering
         
-    def draw(self, screen):
+    def get_cost_surface(self):
+        """
+        Returns the cost surface for the square, rendering it if not already cached.
+        
+        Returns:
+            pygame.Surface: The surface containing the cost text.
+        """
+        if self.cost_surface is None:
+            #Font size is 90% of the square size, at least 10 pixels
+            font_size = max(10, int(self.size * 0.9))
+            font = pygame.font.Font(None, font_size)
+            self.cost_surface = font.render(str(self.cost), True, Color.BLACK)
+        return self.cost_surface
+
+    def draw(self, screen, show_cost=False):
         """
         Draws the square on the given screen based on its state.
         
         Arguments:
             screen: The screen on which to draw the square.
         """
-        if (self.state.is_activated()):
+        if (self.state.is_deactivated()):
+            pygame.draw.rect(screen, Color.BROWN, (self.x, self.y, self.size, self.size))
+        elif (self.state.is_activated()):
             pygame.draw.rect(screen, Color.GRAY, (self.x, self.y, self.size, self.size))
+            if show_cost:
+                self.draw_cost(screen)
         elif (self.state.is_start()):
             pygame.draw.rect(screen, Color.GREEN, (self.x, self.y, self.size, self.size))
         elif (self.state.is_goal()):
             pygame.draw.rect(screen, Color.RED, (self.x, self.y, self.size, self.size))
-        elif (self.state == SquareState.DEACTIVATED):
-            pygame.draw.rect(screen, Color.BROWN, (self.x, self.y, self.size, self.size))
-        elif (self.state == SquareState.VISITED):
+        elif (self.state.is_visited()):
             pygame.draw.rect(screen, Color.PALEGREEN, (self.x, self.y, self.size, self.size))
-        elif (self.state == SquareState.PATH):
+            if show_cost:
+                self.draw_cost(screen)
+        elif (self.state.is_path()):
             pygame.draw.rect(screen, Color.LIGHTBLUE, (self.x, self.y, self.size, self.size))
-        elif (self.state == SquareState.FRONTIER):
+            if show_cost:
+                self.draw_cost(screen)
+        elif (self.state.is_frontier()):
             pygame.draw.rect(screen, Color.ORANGE, (self.x, self.y, self.size, self.size))
+            if show_cost:
+                self.draw_cost(screen)
     
+    def draw_cost(self, screen):
+        """
+        Draws the cost of the square on the screen.
+        This method retrieves the cost surface and blits it onto the screen at the square's center.
+
+        Arguments:
+            screen: The screen on which to draw the cost.
+        """
+        surface = self.get_cost_surface()
+        text_rect = surface.get_rect(center=(self.x + self.size // 2, self.y + self.size // 2))
+        screen.blit(surface, text_rect)
+            
     def change_state(self, new_state):
         """
         Changes the state of the square to a new state.
@@ -81,16 +121,30 @@ class Grid:
         get_goal(): Returns the position of the goal square as a tuple (row, col).
         change_state(row, col, new_state): Changes the state of the square at the specified row and column.
     """
-    def __init__(self, width, height, square_size=SQUARE_SIZE, spacing=SPACING, state=SquareState.ACTIVATED):
+    def __init__(self, width, height, square_size=SQUARE_SIZE, spacing=SPACING, state=SquareState.ACTIVATED, customizable_cost = False, offset=0):
         self.width = width
         self.height = height
+        self.customizable_cost = customizable_cost
         self.grid = []
+        
+        # If customizable_costs is True, load costs from file
+        costs = []
+        if customizable_cost:
+            costs = load_grid_costs('costs.txt')
+            # Check if the costs file matches the grid dimensions
+            if len(costs) != height or any(len(row) != width for row in costs):
+                raise ValueError("Costs file dimensions do not match grid dimensions")
+            
+            
+        # Iterate through the height and width to create the grid
+        # If costs are not provided, use a default cost of 1 for all squares
         for row in range(height):
             row_list = []
             for col in range(width):
-                x = spacing + col * (square_size + spacing)
-                y = spacing + row * (square_size + spacing)
-                row_list.append(Square(x, y, square_size, state))
+                x = offset + spacing + col * (square_size + spacing)
+                y = offset + spacing + row * (square_size + spacing)
+                cost = costs[row][col] if customizable_cost else 1
+                row_list.append(Square(x, y, square_size, state, cost))
             self.grid.append(row_list)
     
     def get(self, row, col):
@@ -109,6 +163,7 @@ class Grid:
         """
         if not (0 <= row < self.height and 0 <= col < self.width):
             raise IndexError("Row or column index out of bounds")
+        
         return self.grid[row][col]
 
     def draw(self, screen):
@@ -120,7 +175,7 @@ class Grid:
         """
         for row in self.grid:
             for square in row:
-                square.draw(screen)
+                square.draw(screen, self.customizable_cost)
 
     def get_start(self):
         """
@@ -167,9 +222,10 @@ class Grid:
         
         # Validate row and col indices
         if not (0 <= row < self.height and 0 <= col < self.width):
-            return 
+            raise IndexError("Row or column index out of bounds")
 
         # Change the state of the square at (row, col)
+        # Ensures that exists only one start and one goal square at a time
         if new_state.is_start():
             start_pos = self.get_start()
             if start_pos is not None:
@@ -180,10 +236,15 @@ class Grid:
             if goal_pos is not None:
                 self.grid[goal_pos[0]][goal_pos[1]].change_state(SquareState.ACTIVATED)
             self.grid[row][col].change_state(SquareState.GOAL)
+
+        # Ensures that if activating a square that is currently the start,
+        # it will change to ACTIVATED state instead of START state
         elif new_state.is_activated():
             if self.grid[row][col].state.is_start():
                 self.grid[row][col].change_state(SquareState.ACTIVATED)
             else:
                 self.grid[row][col].change_state(new_state)
+                
+        # For all other states, just change the state
         else:
             self.grid[row][col].change_state(new_state)

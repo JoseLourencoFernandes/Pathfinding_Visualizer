@@ -1,6 +1,6 @@
 import heapq
 import random
-from definitions import SquareState
+from definitions.states import SquareState
 
 
 class Algorithm:
@@ -189,7 +189,7 @@ class DijkstraAlgorithm(Algorithm):
         for n_row, n_col in self._get_neighbors(row, col):
             neighbor = self.grid.get(n_row, n_col)
             if neighbor.state.is_activated() or neighbor.state.is_goal():
-                new_cost = cost + 1  # ou outro custo se quiseres pesos
+                new_cost = cost + neighbor.cost
                 if (n_row, n_col) not in self.costs or new_cost < self.costs[(n_row, n_col)]:
                     self.costs[(n_row, n_col)] = new_cost
                     heapq.heappush(self.heap, (new_cost, (n_row, n_col)))
@@ -239,7 +239,7 @@ class AStarAlgorithm(Algorithm):
         for n_row, n_col in self._get_neighbors(row, col):
             neighbor = self.grid.get(n_row, n_col)
             if neighbor.state.is_activated() or neighbor.state.is_goal():
-                new_cost = self.costs[(row, col)] + 1  # or use a different cost if needed
+                new_cost = self.costs[(row, col)] + neighbor.cost
                 if (n_row, n_col) not in self.costs or new_cost < self.costs[(n_row, n_col)]:
                     self.costs[(n_row, n_col)] = new_cost
                     priority = new_cost + self.heuristic((n_row, n_col))
