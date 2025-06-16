@@ -13,9 +13,9 @@ from algorithms import BFSAlgorithm, DFSAlgorithm, DijkstraAlgorithm, AStarAlgor
 from classes.grid import Grid
 from classes.button import Button
 from screens.screen_interface import ScreenInterface
+from screens.button_panel_mixin import ButtonPanelMixin
 
-
-class BaseGridScreen(ScreenInterface):
+class BaseGridScreen(ScreenInterface, ButtonPanelMixin):
     """
     Base class for 2D grid screens.
     This class provides the basic functionality for handling a 2D grid, including
@@ -69,17 +69,7 @@ class BaseGridScreen(ScreenInterface):
             sys.exit(1)
 
         # Create buttons
-        self.buttons = [
-            Button(GRID_BUTTON_X, GRID_BUTTON_Y, GRID_BUTTON_WIDTH, GRID_BUTTON_HEIGHT, "Set Start", Color.LIGHTGREEN),
-            Button(GRID_BUTTON_X, GRID_BUTTON_Y + (GRID_BUTTON_HEIGHT + GRID_BUTTON_SPACING), GRID_BUTTON_WIDTH, GRID_BUTTON_HEIGHT, "Set Goal", Color.TOMATO),
-            Button(GRID_BUTTON_X, GRID_BUTTON_Y + 2*(GRID_BUTTON_HEIGHT + GRID_BUTTON_SPACING), GRID_BUTTON_WIDTH, GRID_BUTTON_HEIGHT, "BFS Algorithm", Color.TANGERINE),
-            Button(GRID_BUTTON_X, GRID_BUTTON_Y + 3*(GRID_BUTTON_HEIGHT + GRID_BUTTON_SPACING), GRID_BUTTON_WIDTH, GRID_BUTTON_HEIGHT, "DFS Algorithm", Color.TANGERINE),
-            Button(GRID_BUTTON_X, GRID_BUTTON_Y + 4*(GRID_BUTTON_HEIGHT + GRID_BUTTON_SPACING), GRID_BUTTON_WIDTH, GRID_BUTTON_HEIGHT, "Dijkstra Algorithm", Color.TANGERINE),
-            Button(GRID_BUTTON_X, GRID_BUTTON_Y + 5*(GRID_BUTTON_HEIGHT + GRID_BUTTON_SPACING), GRID_BUTTON_WIDTH, GRID_BUTTON_HEIGHT, "A* Algorithm", Color.TANGERINE),
-            Button(GRID_BUTTON_X, GRID_BUTTON_Y + 6*(GRID_BUTTON_HEIGHT + GRID_BUTTON_SPACING), GRID_BUTTON_WIDTH, GRID_BUTTON_HEIGHT, "Greedy Best First Algorithm", Color.TANGERINE),
-            Button(GRID_BUTTON_X, GRID_BUTTON_Y + 7*(GRID_BUTTON_HEIGHT + GRID_BUTTON_SPACING), GRID_BUTTON_WIDTH, GRID_BUTTON_HEIGHT, "Reset", Color.TANGERINE),
-            Button(GRID_BUTTON_X, GRID_BUTTON_Y + 8*(GRID_BUTTON_HEIGHT + GRID_BUTTON_SPACING), GRID_BUTTON_WIDTH, GRID_BUTTON_HEIGHT, "Generate Maze (Using Prim Algorithm)", Color.LIGHTBLUE)
-        ]
+        self.buttons = self.create_default_buttons(object="Square", include_maze_button=False)
         
         # Load the arrow image for the back button
         arrow_path = os.path.join("assets", "arrow_left.png")
@@ -112,14 +102,14 @@ class BaseGridScreen(ScreenInterface):
         # Check if user has request to go back to the main menu
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
             if self.back_button.is_clicked(mouse_pos):
-                self.app_state.currently_screen = Screen.MAIN_MENU
+                self.app_state.current_screen = Screen.MAIN_MENU
                 return  # Exit the event handling if back button is clicked
 
         elif event.type == pygame.KEYDOWN:
             # Check for key presses to quit or reset the grid
             # If the Escape key is pressed, go back to the main menu
             if event.key == pygame.K_ESCAPE:
-                self.app_state.currently_screen = Screen.MAIN_MENU
+                self.app_state.current_screen = Screen.MAIN_MENU
             # If Ctrl+Q is pressed, quit the application
             elif event.key == pygame.K_q and (pygame.key.get_mods() & pygame.KMOD_CTRL):
                 self.local_app_state.running = False

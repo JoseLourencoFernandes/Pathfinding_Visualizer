@@ -15,3 +15,4 @@ class Screen(Enum):
     MAIN_MENU = 0
     GRID_2D = 1
     GRID_2D_WEIGHTED = 2
+    GRAPH = 3

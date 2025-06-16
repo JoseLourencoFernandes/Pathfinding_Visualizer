@@ -15,3 +15,4 @@ class Color:
     PALEGREEN = (84,139,84)
     ORANGE = (255, 165, 0)
     TANGERINE = (255,178,102)
+    LIGHTCORAL = (127,255,212)

@@ -10,11 +10,13 @@ class GlobalAppState:
         currently_screen (Screen): The currently active screen in the application.
         grid2d_app_state (Grid2DAppState): The state of the 2D grid application.
         grid2d_weighted_app_state (Grid2DAppState): The state of the weighted 2D grid application.
+        graph_app_state (GraphAppState): The state of the graph application.
     """
     def __init__(self):
-        self.currently_screen = Screen.MAIN_MENU
+        self.current_screen = Screen.MAIN_MENU
         self.grid2d_app_state = Grid2DAppState()
         self.grid2d_weighted_app_state = Grid2DAppState()
+        self.graph_app_state = GraphAppState()
 
 class Grid2DAppState:
     """
@@ -33,6 +35,18 @@ class Grid2DAppState:
     """
     def __init__(self):
         self.set_start_mode = False 
+        self.set_goal_mode = False
+        self.ignore_drag = False
+        self.running_algorithm = False
+        self.grid_full_reset = True
+        self.start_time = None
+        self.execution_time = 0.0
+        self.runned_algorithm = False
+
+class GraphAppState:
+
+    def __init__(self):
+        self.set_start_mode = False
         self.set_goal_mode = False
         self.ignore_drag = False
         self.running_algorithm = False

@@ -40,6 +40,14 @@ class MainMenuScreen(ScreenInterface):
                 MENU_BUTTON_HEIGHT,
                 "2D Grid Weighted",
                 Color.LIGHTBLUE
+            ),
+            Button(
+                MENU_BUTTON_X,
+                MENU_BUTTON_Y + 2 * (MENU_BUTTON_HEIGHT + MENU_BUTTON_SPACING),
+                MENU_BUTTON_WIDTH,
+                MENU_BUTTON_HEIGHT,
+                "Graph",
+                Color.LIGHTCORAL
             )
         ]
 
@@ -60,9 +68,11 @@ class MainMenuScreen(ScreenInterface):
             for idx, button in enumerate(self.buttons):
                 if button.is_clicked(mouse_pos):
                     if idx == 0:
-                        self.app_state.currently_screen = Screen.GRID_2D
+                        self.app_state.current_screen = Screen.GRID_2D
                     elif idx == 1:
-                        self.app_state.currently_screen = Screen.GRID_2D_WEIGHTED
+                        self.app_state.current_screen = Screen.GRID_2D_WEIGHTED
+                    elif idx == 2:
+                        self.app_state.current_screen = Screen.GRAPH
 
     def run(self):
         # No specific logic to run for the main menu

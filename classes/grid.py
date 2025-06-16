@@ -215,11 +215,10 @@ class Grid:
         Raises:
             ValueError: If new_state is not an instance of State Enum.
         """
-        
         # Validate new_state is an instance of State Enum
         if not isinstance(new_state, SquareState):
             raise ValueError("new_state must be an instance of State Enum")
-        
+
         # Validate row and col indices
         if not (0 <= row < self.height and 0 <= col < self.width):
             raise IndexError("Row or column index out of bounds")
