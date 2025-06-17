@@ -7,7 +7,7 @@ import time
 from definitions.global_constants import Screen, SCREEN_WIDTH, SCREEN_HEIGHT
 from definitions.grid_constants import SQUARE_SIZE, SPACING, GRID_BUTTON_X, GRID_BUTTON_Y, GRID_BUTTON_WIDTH, GRID_BUTTON_HEIGHT, GRID_BUTTON_SPACING, TIME_TEXT_X, TIME_TEXT_Y
 from definitions.colors import Color
-from definitions.states import SquareState
+from definitions.states import State
 from algorithms import BFSAlgorithm, DFSAlgorithm, DijkstraAlgorithm, AStarAlgorithm, GreedyBestFirstAlgorithm, generate_maze_prim
 from classes.grid import Grid
 from classes.button import Button
@@ -24,7 +24,40 @@ class GraphScreen(ScreenInterface, ButtonPanelMixin):
         self.local_app_state = app_state.graph_app_state
         
         self.graph = Graph()
-        self.graph.add_node(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2)  # Add a default node at the center
+        
+        
+        #TEST GRAPH
+        self.graph = Graph()
+        # Create nodes
+        node1 = self.graph.add_node(150, 200)
+        node2 = self.graph.add_node(300, 150)
+        node3 = self.graph.add_node(450, 200)
+        node4 = self.graph.add_node(600, 150)
+        node5 = self.graph.add_node(500, 600)
+        node6 = self.graph.add_node(600, 300)
+        node7 = self.graph.add_node(450, 350)
+        node8 = self.graph.add_node(300, 300)
+        # Set states
+        node1.change_state(State.START)
+        node5.change_state(State.GOAL)
+        # Connect nodes (zig-zag path)
+        self.graph.add_edge(node1, node2)
+        self.graph.add_edge(node2, node3)
+        self.graph.add_edge(node3, node4)
+        self.graph.add_edge(node4, node5)
+        self.graph.add_edge(node5, node6)
+        self.graph.add_edge(node6, node7)
+        self.graph.add_edge(node7, node8)
+        # Add some extra connections for more complexity
+        self.graph.add_edge(node2, node8)
+        self.graph.add_edge(node3, node7)
+        self.graph.add_edge(node4, node6)
+        self.graph.add_edge(node1, node8)
+        self.graph.add_edge(node3, node6)
+        self.graph.add_edge(node4, node7)
+        
+        
+        
         
         self.drag_start_node = None
         self.dragging = False
@@ -65,9 +98,9 @@ class GraphScreen(ScreenInterface, ButtonPanelMixin):
                     if self.local_app_state.set_start_mode:
                         # Clear previous start
                         for n in self.graph.nodes:
-                            if n.state == SquareState.START:
-                                n.change_state(SquareState.ACTIVATED)
-                        node.change_state(SquareState.START)
+                            if n.state == State.START:
+                                n.change_state(State.ACTIVATED)
+                        node.change_state(State.START)
                         self.local_app_state.set_start_mode = False
                         self.local_app_state.set_goal_mode = False
 
@@ -75,8 +108,8 @@ class GraphScreen(ScreenInterface, ButtonPanelMixin):
                     elif self.local_app_state.set_goal_mode:
                         for n in self.graph.nodes:
                             if n.state.is_goal():
-                                n.change_state(SquareState.ACTIVATED)
-                        node.change_state(SquareState.GOAL)
+                                n.change_state(State.ACTIVATED)
+                        node.change_state(State.GOAL)
                         self.local_app_state.set_goal_mode = False
                         self.local_app_state.set_start_mode = False   
                 
@@ -111,6 +144,12 @@ class GraphScreen(ScreenInterface, ButtonPanelMixin):
                     
                 
     def handle_button_click(self, idx):
+        
+        # Deselect start and goal modes if any button is clicked
+        self.local_app_state.set_start_mode = False
+        self.local_app_state.set_goal_mode = False
+        self.local_app_state.ignore_drag = True
+        
         if idx == 0:
             # Set Start Mode
             self.local_app_state.set_start_mode = not self.local_app_state.set_start_mode
@@ -122,15 +161,47 @@ class GraphScreen(ScreenInterface, ButtonPanelMixin):
         elif idx == 7:
             # Reset Graph
             self.graph = Graph()
-        else:
-            pass
+            
+        else: # Algorithm buttons
+            # Manage the state of the application
+            if self.graph.get_start() is None or self.graph.get_goal() is None:
+                return
 
-    
+
+            # Set the application state
+            self.local_app_state.runned_algorithm = True
+            self.local_app_state.grid_full_reset = False
+            self.local_app_state.start_time = time.time()
+            self.local_app_state.running_algorithm = True
+
+            if idx == 2:
+                self.algorithm = BFSAlgorithm(self.graph, self.graph.get_neighbors)
+            elif idx == 3:
+                self.algorithm = DFSAlgorithm(self.graph, self.graph.get_neighbors)
+            elif idx == 4:
+                self.algorithm = DijkstraAlgorithm(self.graph, self.graph.get_neighbors)
+            elif idx == 5:
+                self.algorithm = AStarAlgorithm(self.graph, self.graph.get_neighbors)
+            elif idx == 6:
+                self.algorithm = GreedyBestFirstAlgorithm(self.graph, self.graph.get_neighbors)
+
+
     def run(self):
         
         self.handle_mouse_drag()
-    
 
+        
+        if self.local_app_state.running_algorithm:
+            self.update_algorithm()
+            time.sleep(1)
+
+    def update_algorithm(self):
+
+        self.local_app_state.execution_time = time.time() - self.local_app_state.start_time  
+        if not self.algorithm.step():
+            self.local_app_state.running_algorithm = False
+            self.algorithm.highlight_path()  
+    
     def is_mouse_near_edge(self, x1, y1, x2, y2, mouse_x, mouse_y, threshold=8):
         # Compute the distance from the mouse to the line segment (x1, y1)-(x2, y2)
         px = x2 - x1
@@ -207,4 +278,3 @@ class GraphScreen(ScreenInterface, ButtonPanelMixin):
                 button.draw(self.screen, self.font, active=self.local_app_state.running_algorithm)
         
         self.back_button.draw(self.screen, self.font)
-    

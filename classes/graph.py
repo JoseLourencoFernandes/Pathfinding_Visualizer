@@ -1,5 +1,5 @@
 import pygame
-from definitions.states import SquareState
+from definitions.states import State
 from definitions.colors import Color
 from definitions.graph_constants import NODE_RADIUS
 
@@ -8,7 +8,8 @@ class GraphNode:
         self.x = x
         self.y = y
         self.id = id
-        self.state = SquareState.ACTIVATED
+        self.cost = 1
+        self.state = State.ACTIVATED
         
     def draw(self, screen):
         if self.state.is_activated():
@@ -30,7 +31,7 @@ class GraphNode:
         return (dx*dx + dy*dy) <= NODE_RADIUS*NODE_RADIUS
     
     def change_state(self, new_state):
-        if not isinstance(new_state, SquareState):
+        if not isinstance(new_state, State):
             raise ValueError("new_state must be an instance of SquareState")
         
         self.state = new_state
@@ -104,4 +105,24 @@ class Graph:
             node.change_state(new_state)
         else:
             raise ValueError("Node not found in the graph")
+        
+    def get_start(self):
+        for node in self.nodes:
+            if node.state.is_start():
+                return node
+        return None
     
+    def get_goal(self):
+        for node in self.nodes:
+            if node.state.is_goal():
+                return node
+        return None
+    
+    def get_neighbors(self, node):
+        neighbors = []
+        for n1, n2 in self.edges:
+            if n1 == node:
+                neighbors.append(n2)
+            elif n2 == node:
+                neighbors.append(n1)
+        return neighbors

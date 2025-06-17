@@ -1,6 +1,6 @@
 import heapq
 import random
-from definitions.states import SquareState
+from definitions.states import State
 
 
 class Algorithm:
@@ -11,15 +11,17 @@ class Algorithm:
     and highlighting the path found.
     
     Attributes:
-        grid (Grid): The grid on which the algorithm operates.
+        structure (Grid or Graph): The grid or graph structure on which the algorithm operates.
         visited (set): A set of visited nodes.
         parents (dict): A dictionary mapping each node to its parent node.
         path (list): A list to store the path found by the algorithm.
         found (bool): A flag indicating whether the goal has been found.
     """
-    def __init__(self, grid):
-        self.grid = grid
+    def __init__(self, structure, get_neighbors):
+        self.structure = structure
+        self.get_neighbors = get_neighbors
         self.reset()
+
 
     def reset(self):
         """
@@ -51,36 +53,15 @@ class Algorithm:
         changing the state of each square in the path to State.PATH.
         If the goal node is not found, it does nothing.
         """
-        goal = self.grid.get_goal()
+        goal = self.structure.get_goal()
         if not goal:
             return
         node = goal
         while node is not None:
-            row, col = node
-            square = self.grid.get(row, col)
-            if not square.state.is_start() and not square.state.is_goal():
-                square.change_state(SquareState.PATH)
+            if not node.state.is_start() and not node.state.is_goal():
+                node.change_state(State.PATH)
             self.path.append(node)
             node = self.parents.get(node) 
-            
-    def _get_neighbors(self, row, col):
-        """
-        Returns the valid neighbors of a given square in the grid.
-        This method yields the coordinates of the neighboring squares
-        that are within the bounds of the grid.
-        
-        Arguments:
-            row (int): The row index of the square.
-            col (int): The column index of the square.
-            
-        Yields:
-            tuple: A tuple (n_row, n_col) representing the coordinates of a neighboring square.
-        """
-        for d_row, d_col in [(-1,0),(1,0),(0,-1),(0,1)]:
-            n_row, n_col = row + d_row, col + d_col
-            if 0 <= n_row < self.grid.height and 0 <= n_col < self.grid.width:
-                # Returns a yelder to allow iteration over neighbors
-                yield n_row, n_col
 
 
 class BFSAlgorithm(Algorithm):
@@ -89,13 +70,13 @@ class BFSAlgorithm(Algorithm):
     This class implements the BFS algorithm to find the shortest path
     from the start square to the goal square in the grid.
     """ 
-    def __init__(self, grid):
-        super().__init__(grid)
+    def __init__(self, structure, get_neighbors):
+        super().__init__(structure, get_neighbors)
 
     def reset(self):
         super().reset()
         self.queue = []
-        start = self.grid.get_start()
+        start = self.structure.get_start()
         if start:
             self.queue.append(start)
             self.visited.add(start)
@@ -104,20 +85,18 @@ class BFSAlgorithm(Algorithm):
     def step(self):
         if not self.queue or self.found:
             return False  # end processing
-        row, col = self.queue.pop(0)
-        square = self.grid.get(row, col)
-        if not square.state.is_start() and not square.state.is_goal():
-            square.change_state(SquareState.VISITED)
-        for n_row, n_col in self._get_neighbors(row, col):
-            neighbor = self.grid.get(n_row, n_col)
-            if (n_row, n_col) not in self.visited and neighbor.state.is_activated() or neighbor.state.is_goal():
-                self.queue.append((n_row, n_col))
-                self.visited.add((n_row, n_col))
-                self.parents[(n_row, n_col)] = (row, col)
+        node = self.queue.pop(0)
+        if not node.state.is_start() and not node.state.is_goal():
+            node.change_state(State.VISITED)
+        for neighbor in self.get_neighbors(node):
+            if neighbor not in self.visited and (neighbor.state.is_activated() or neighbor.state.is_goal()):
+                self.queue.append(neighbor)
+                self.visited.add(neighbor)
+                self.parents[neighbor] = node
                 if neighbor.state.is_goal():
                     self.found = True
                 elif neighbor.state.is_activated():
-                    neighbor.change_state(SquareState.FRONTIER)
+                    neighbor.change_state(State.FRONTIER)
         return True  # continue processing
 
 
@@ -127,13 +106,13 @@ class DFSAlgorithm(Algorithm):
     This class implements the DFS algorithm to find a path from the start square
     to the goal square in the grid.
     """
-    def __init__(self, grid):
-        super().__init__(grid)
+    def __init__(self, structure, get_neighbors):
+        super().__init__(structure, get_neighbors)
 
     def reset(self):
         super().reset()
         self.stack = []
-        start = self.grid.get_start()
+        start = self.structure.get_start()
         if start:
             self.stack.append(start)
             self.visited.add(start)
@@ -142,20 +121,18 @@ class DFSAlgorithm(Algorithm):
     def step(self):
         if not self.stack or self.found:
             return False  # end processing
-        row, col = self.stack.pop()
-        square = self.grid.get(row, col)
-        if not square.state.is_start() and not square.state.is_goal():
-            square.change_state(SquareState.VISITED)
-        for n_row, n_col in self._get_neighbors(row, col):
-            neighbor = self.grid.get(n_row, n_col)
-            if (n_row, n_col) not in self.visited and neighbor.state.is_activated() or neighbor.state.is_goal():
-                self.stack.append((n_row, n_col))
-                self.visited.add((n_row, n_col))
-                self.parents[(n_row, n_col)] = (row, col)
+        node = self.stack.pop()
+        if not node.state.is_start() and not node.state.is_goal():
+            node.change_state(State.VISITED)
+        for neighbor in self.structure.get_neighbors(node):
+            if neighbor not in self.visited and (neighbor.state.is_activated() or neighbor.state.is_goal()):
+                self.stack.append(neighbor)
+                self.visited.add(neighbor)
+                self.parents[neighbor] = node
                 if neighbor.state.is_goal():
                     self.found = True
                 elif neighbor.state.is_activated():
-                    neighbor.change_state(SquareState.FRONTIER)
+                    neighbor.change_state(State.FRONTIER)
         return True  # continue processing
 
 
@@ -165,14 +142,14 @@ class DijkstraAlgorithm(Algorithm):
     This class implements Dijkstra's algorithm to find the shortest path
     from the start square to the goal square in the grid.
     """
-    def __init__(self, grid):
-        super().__init__(grid)
-        
+    def __init__(self, structure, get_neighbors):
+        super().__init__(structure, get_neighbors)
+
     def reset(self):
         super().reset()
         self.heap = []
         self.costs = {}
-        start = self.grid.get_start()
+        start = self.structure.get_start()
         if start:
             heapq.heappush(self.heap, (0, start))
             self.visited.add(start)
@@ -183,11 +160,11 @@ class DijkstraAlgorithm(Algorithm):
         if not self.heap or self.found:
             return False
         cost, (row, col) = heapq.heappop(self.heap)
-        square = self.grid.get(row, col)
+        square = self.structure.get(row, col)
         if not square.state.is_start() and not square.state.is_goal():
-            square.change_state(SquareState.VISITED)
+            square.change_state(State.VISITED)
         for n_row, n_col in self._get_neighbors(row, col):
-            neighbor = self.grid.get(n_row, n_col)
+            neighbor = self.structure.get(n_row, n_col)
             if neighbor.state.is_activated() or neighbor.state.is_goal():
                 new_cost = cost + neighbor.cost
                 if (n_row, n_col) not in self.costs or new_cost < self.costs[(n_row, n_col)]:
@@ -197,7 +174,7 @@ class DijkstraAlgorithm(Algorithm):
                     if neighbor.state.is_goal():
                         self.found = True
                     elif neighbor.state.is_activated():
-                        neighbor.change_state(SquareState.FRONTIER)
+                        neighbor.change_state(State.FRONTIER)
         return True
 
 
@@ -214,8 +191,8 @@ class AStarAlgorithm(Algorithm):
         super().reset()
         self.heap = []
         self.costs = {}
-        start = self.grid.get_start()
-        goal = self.grid.get_goal()
+        start = self.structure.get_start()
+        goal = self.structure.get_goal()
         self.goal = goal
         if start and goal:
             heapq.heappush(self.heap, (0, start))
@@ -233,11 +210,11 @@ class AStarAlgorithm(Algorithm):
         if not self.heap or self.found:
             return False
         cost, (row, col) = heapq.heappop(self.heap)
-        square = self.grid.get(row, col)
+        square = self.structure.get(row, col)
         if not square.state.is_start() and not square.state.is_goal():
-            square.change_state(SquareState.VISITED)
+            square.change_state(State.VISITED)
         for n_row, n_col in self._get_neighbors(row, col):
-            neighbor = self.grid.get(n_row, n_col)
+            neighbor = self.structure.get(n_row, n_col)
             if neighbor.state.is_activated() or neighbor.state.is_goal():
                 new_cost = self.costs[(row, col)] + neighbor.cost
                 if (n_row, n_col) not in self.costs or new_cost < self.costs[(n_row, n_col)]:
@@ -248,7 +225,7 @@ class AStarAlgorithm(Algorithm):
                     if neighbor.state.is_goal():
                         self.found = True
                     elif neighbor.state.is_activated():
-                        neighbor.change_state(SquareState.FRONTIER)
+                        neighbor.change_state(State.FRONTIER)
         return True
     
     
@@ -258,14 +235,14 @@ class GreedyBestFirstAlgorithm(Algorithm):
     This class implements the Greedy Best-First Search algorithm to find a path
     from the start square to the goal square in the grid, using a heuristic.
     """
-    def __init__(self, grid):
-        super().__init__(grid)
+    def __init__(self, structure, get_neighbors):
+        super().__init__(structure, get_neighbors)
 
     def reset(self):
         super().reset()
         self.heap = []
-        start = self.grid.get_start()
-        goal = self.grid.get_goal()
+        start = self.structure.get_start()
+        goal = self.structure.get_goal()
         self.goal = goal
         if start and goal:
             heapq.heappush(self.heap, (self.heuristic(start), start))
@@ -281,20 +258,19 @@ class GreedyBestFirstAlgorithm(Algorithm):
     def step(self):
         if not self.heap or self.found:
             return False
-        _, (row, col) = heapq.heappop(self.heap)
-        square = self.grid.get(row, col)
-        if not square.state.is_start() and not square.state.is_goal():
-            square.change_state(SquareState.VISITED)
-        for n_row, n_col in self._get_neighbors(row, col):
-            neighbor = self.grid.get(n_row, n_col)
+        _, node = heapq.heappop(self.heap)
+        if not node.state.is_start() and not node.state.is_goal():
+            node.change_state(State.VISITED)
+        for n_row, n_col in self._get_neighbors(node):
+            neighbor = self.structure.get(n_row, n_col)
             if (n_row, n_col) not in self.visited and (neighbor.state.is_activated() or neighbor.state.is_goal()):
                 heapq.heappush(self.heap, (self.heuristic((n_row, n_col)), (n_row, n_col)))
                 self.visited.add((n_row, n_col))
-                self.parents[(n_row, n_col)] = (row, col)
+                self.parents[(n_row, n_col)] = (node.row, node.col)
                 if neighbor.state.is_goal():
                     self.found = True
                 elif neighbor.state.is_activated():
-                    neighbor.change_state(SquareState.FRONTIER)
+                    neighbor.change_state(State.FRONTIER)
         return True
     
     
@@ -312,12 +288,12 @@ def generate_maze_prim(grid):
     # Inicialize all squares as walls (deactivated)
     for row in range(grid.height):
         for col in range(grid.width):
-            grid.get(row, col).change_state(SquareState.DEACTIVATED)
+            grid.get(row, col).change_state(State.DEACTIVATED)
 
     # Choose a random starting point
     start_row = random.randrange(0, grid.height, 2)
     start_col = random.randrange(0, grid.width, 2)
-    grid.get(start_row, start_col).change_state(SquareState.ACTIVATED)
+    grid.get(start_row, start_col).change_state(State.ACTIVATED)
 
     # List of walls to be processed, it will contain tuples of the form (wall_row, wall_col, n_row, n_col)
     # where (n_row, n_col) is the neighbor of the wall
@@ -340,8 +316,8 @@ def generate_maze_prim(grid):
             # Check if the neighboring square is deactivated
             if grid.get(n_row, n_col).state.is_deactivated():
                 # Carve a passage by activating the wall and the neighboring square
-                grid.get(wall_row, wall_col).change_state(SquareState.ACTIVATED)
-                grid.get(n_row, n_col).change_state(SquareState.ACTIVATED)
+                grid.get(wall_row, wall_col).change_state(State.ACTIVATED)
+                grid.get(n_row, n_col).change_state(State.ACTIVATED)
                 # Add the neighboring square's walls to the list
                 for d_row, d_col in [(-2,0),(2,0),(0,-2),(0,2)]:
                     nn_row, nn_col = n_row + d_row, n_col + d_col

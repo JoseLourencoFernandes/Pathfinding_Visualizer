@@ -1,7 +1,7 @@
 import pygame
 from definitions.grid_constants import SQUARE_SIZE, SPACING
 from definitions.colors import Color
-from definitions.states import SquareState
+from definitions.states import State
 from utils.loaders import load_grid_costs
 
 
@@ -28,6 +28,8 @@ class Square:
         self.size = size
         self.state = state
         self.cost = cost
+        self.row = y // (size + SPACING)  # Calculate row based on y position
+        self.col = x // (size + SPACING)
         self.cost_surface = None # Cache for cost surface to avoid re-rendering
         
     def get_cost_surface(self):
@@ -96,7 +98,7 @@ class Square:
         Raises:
             ValueError: If new_state is not an instance of State Enum.
         """
-        if not isinstance(new_state, SquareState):
+        if not isinstance(new_state, State):
             raise ValueError("new_state must be an instance of State Enum")
 
         self.state = new_state
@@ -121,7 +123,7 @@ class Grid:
         get_goal(): Returns the position of the goal square as a tuple (row, col).
         change_state(row, col, new_state): Changes the state of the square at the specified row and column.
     """
-    def __init__(self, width, height, square_size=SQUARE_SIZE, spacing=SPACING, state=SquareState.ACTIVATED, customizable_cost = False, offset=0):
+    def __init__(self, width, height, square_size=SQUARE_SIZE, spacing=SPACING, state=State.ACTIVATED, customizable_cost = False, offset=0):
         self.width = width
         self.height = height
         self.customizable_cost = customizable_cost
@@ -147,24 +149,27 @@ class Grid:
                 row_list.append(Square(x, y, square_size, state, cost))
             self.grid.append(row_list)
     
-    def get(self, row, col):
+    def get(self, pos):
         """
-        Returns the square at the specified row and column.
-        
+        Returns the square at the specified position.
+
         Arguments:
-            row (int): The row index of the square.
-            col (int): The column index of the square.
+            pos (tuple): A tuple (row, col) representing the position of the square.
             
-        Returns:
-            Square: The square at the specified row and column.
+        REturns:
+            Square: The square at the specified position.
             
         Raises:
+            ValueError: If pos is not a tuple of length 2.
             IndexError: If the row or column index is out of bounds.
         """
-        if not (0 <= row < self.height and 0 <= col < self.width):
-            raise IndexError("Row or column index out of bounds")
         
-        return self.grid[row][col]
+        if not isinstance(pos, tuple) or len(pos) != 2:
+            raise ValueError("Position must be a tuple (row, col)")
+        
+        if not (0 <= pos[0] < self.height and 0 <= pos[1] < self.width):
+            raise IndexError("Row or column index out of bounds")
+        return self.grid[pos[0]][pos[1]]
 
     def draw(self, screen):
         """
@@ -182,12 +187,12 @@ class Grid:
         Returns the position of the start square as a tuple (row, col) or None if not found.
         
         Returns:
-            tuple: A tuple (row, col) representing the position of the start square, or None if not found.
+            Square: The square representing the start position, or None if not found.
         """
         for row in self.grid:
             for square in row:
                 if square.state.is_start():
-                    return (self.grid.index(row), row.index(square))
+                    return square
         return None
     
     def get_goal(self):
@@ -200,7 +205,7 @@ class Grid:
         for row in self.grid:
             for square in row:
                 if square.state.is_goal():
-                    return (self.grid.index(row), row.index(square))
+                    return square
         return None
 
     def change_state(self, row, col, new_state):
@@ -216,7 +221,7 @@ class Grid:
             ValueError: If new_state is not an instance of State Enum.
         """
         # Validate new_state is an instance of State Enum
-        if not isinstance(new_state, SquareState):
+        if not isinstance(new_state, State):
             raise ValueError("new_state must be an instance of State Enum")
 
         # Validate row and col indices
@@ -228,22 +233,40 @@ class Grid:
         if new_state.is_start():
             start_pos = self.get_start()
             if start_pos is not None:
-                self.grid[start_pos[0]][start_pos[1]].change_state(SquareState.ACTIVATED)
-            self.grid[row][col].change_state(SquareState.START)
+                self.grid[start_pos[0]][start_pos[1]].change_state(State.ACTIVATED)
+            self.grid[row][col].change_state(State.START)
         elif new_state.is_goal():
             goal_pos = self.get_goal()
             if goal_pos is not None:
-                self.grid[goal_pos[0]][goal_pos[1]].change_state(SquareState.ACTIVATED)
-            self.grid[row][col].change_state(SquareState.GOAL)
+                self.grid[goal_pos[0]][goal_pos[1]].change_state(State.ACTIVATED)
+            self.grid[row][col].change_state(State.GOAL)
 
         # Ensures that if activating a square that is currently the start,
         # it will change to ACTIVATED state instead of START state
         elif new_state.is_activated():
             if self.grid[row][col].state.is_start():
-                self.grid[row][col].change_state(SquareState.ACTIVATED)
+                self.grid[row][col].change_state(State.ACTIVATED)
             else:
                 self.grid[row][col].change_state(new_state)
                 
         # For all other states, just change the state
         else:
             self.grid[row][col].change_state(new_state)
+            
+    def get_neighbors(self, square):
+        """
+        Returns the valid neighbors of a given square in the grid.
+        This method yields the coordinates of the neighboring squares
+        that are within the bounds of the grid.
+        
+        Arguments:
+            row (int): The row index of the square.
+            col (int): The column index of the square.
+            
+        Yields:
+            tuple: A tuple (n_row, n_col) representing the coordinates of a neighboring square.
+        """
+        for d_row, d_col in [(-1,0),(1,0),(0,-1),(0,1)]:
+            n_row, n_col = square.row + d_row, square.col + d_col
+            if 0 <= n_row < self.height and 0 <= n_col < self.width:
+                yield self.grid[n_row][n_col]
