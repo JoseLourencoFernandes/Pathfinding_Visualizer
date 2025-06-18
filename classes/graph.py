@@ -36,6 +36,26 @@ class GraphNode:
         
         self.state = new_state
         
+class Edge:
+    def __init__(self, node1, node2, cost=1):
+        if not isinstance(node1, GraphNode) or not isinstance(node2, GraphNode):
+            raise ValueError("node1 and node2 must be instances of GraphNode")
+        
+        self.node1 = node1
+        self.node2 = node2
+        self.cost = cost
+        self.state = State.ACTIVATED
+        
+    def draw(self, screen):
+        if self.state.is_activated():
+            pygame.draw.line(screen, Color.WHITE, (self.node1.x, self.node1.y), (self.node2.x, self.node2.y), 2)
+        elif self.state.is_visited():
+            pygame.draw.line(screen, Color.PALEGREEN, (self.node1.x, self.node1.y), (self.node2.x, self.node2.y), 2)
+        elif self.state.is_path():
+            pygame.draw.line(screen, Color.LIGHTBLUE, (self.node1.x, self.node1.y), (self.node2.x, self.node2.y), 2)
+        elif self.state.is_frontier():
+            pygame.draw.line(screen, Color.ORANGE, (self.node1.x, self.node1.y), (self.node2.x, self.node2.y), 2)
+        
 class Graph:
     def __init__(self):
         self.id_counter = 1
@@ -62,7 +82,7 @@ class Graph:
         if node in self.nodes:
             self.nodes.remove(node)
             # Remove edges connected to this node
-            self.edges = [edge for edge in self.edges if edge[0] != node and edge[1] != node]
+            self.edges = [edge for edge in self.edges if edge.node1 != node and edge.node2 != node]
     
     def get_node(self, x, y):
         for node in self.nodes:
@@ -75,26 +95,26 @@ class Graph:
             print(f"Edge from Node {edge[0].id} to Node {edge[1].id}")
     
     def add_edge(self, node1, node2):
-        if node1 in self.nodes and node2 in self.nodes and node1 != node2 and (node1, node2) not in self.edges and (node2, node1) not in self.edges:
-            self.edges.append((node1, node2))
+        if node1 in self.nodes and node2 in self.nodes and node1 != node2 and not self.get_edge(node1, node2):
+            edge = Edge(node1, node2)
+            self.edges.append(edge)
 
     def remove_edge(self, node1, node2):
-        if (node1, node2) in self.edges:
-            self.edges.remove((node1, node2))
-        elif (node2, node1) in self.edges:
-            self.edges.remove((node2, node1))
+        edge = self.get_edge(node1, node2)
+        if edge:
+            self.edges.remove(edge)
         else:
-            raise ValueError("Edge not found in the graph")
+            raise ValueError("Edge not found between the specified nodes")
         
     def get_edge(self, node1, node2):
         for edge in self.edges:
-            if (edge[0] == node1 and edge[1] == node2) or (edge[0] == node2 and edge[1] == node1):
+            if (edge.node1 == node1 and edge.node2 == node2) or (edge.node1 == node2 and edge.node2 == node1):
                 return edge
         return None
     
     def draw(self, screen):
         for edge in self.edges:
-            pygame.draw.line(screen, Color.WHITE, (edge[0].x, edge[0].y), (edge[1].x, edge[1].y), 2)
+            edge.draw(screen)
 
         for node in self.nodes:
             node.draw(screen)
@@ -120,9 +140,34 @@ class Graph:
     
     def get_neighbors(self, node):
         neighbors = []
-        for n1, n2 in self.edges:
-            if n1 == node:
-                neighbors.append(n2)
-            elif n2 == node:
-                neighbors.append(n1)
+        for edge in self.edges:
+            if edge.node1 == node:
+                neighbors.append(edge.node2)
+            elif edge.node2 == node:
+                neighbors.append(edge.node1)
         return neighbors
+    
+    def get_cost(self, node1, node2):
+        edge = self.get_edge(node1, node2)
+        if edge:
+            return edge.cost
+        else:
+            raise ValueError("Edge not found between the specified nodes")
+        
+    def mark_edge_visited(self, node1, node2):
+        edge = self.get_edge(node1, node2)
+        if edge:
+            edge.state = State.VISITED
+    
+    def mark_edge_path(self, node1, node2):
+        edge = self.get_edge(node1, node2)
+        if edge:
+            edge.state = State.PATH
+            
+    def mark_edge_frontier(self, node1, node2):
+        edge = self.get_edge(node1, node2)
+        if edge:
+            edge.state = State.FRONTIER
+            
+def euclidean_graph_heuristic(node, goal):
+    return ((node.x - goal.x) ** 2 + (node.y - goal.y) ** 2) ** 0.5

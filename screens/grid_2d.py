@@ -14,6 +14,7 @@ from classes.grid import Grid
 from classes.button import Button
 from screens.screen_interface import ScreenInterface
 from screens.button_panel_mixin import ButtonPanelMixin
+from classes.grid import manhattan_heuristic
 
 class BaseGridScreen(ScreenInterface, ButtonPanelMixin):
     """
@@ -304,11 +305,11 @@ class BaseGridScreen(ScreenInterface, ButtonPanelMixin):
             elif idx == 3:
                 self.algorithm = DFSAlgorithm(self.grid, self.grid.get_neighbors)
             elif idx == 4:
-                self.algorithm = DijkstraAlgorithm(self.grid, self.grid.get_neighbors)
+                self.algorithm = DijkstraAlgorithm(self.grid, self.grid.get_neighbors,  self.grid.get_cost)
             elif idx == 5:
-                self.algorithm = AStarAlgorithm(self.grid, self.grid.get_neighbors)
+                self.algorithm = AStarAlgorithm(self.grid, self.grid.get_neighbors, self.grid.get_cost , manhattan_heuristic)
             elif idx == 6:
-                self.algorithm = GreedyBestFirstAlgorithm(self.grid, self.grid.get_neighbors)
+                self.algorithm = GreedyBestFirstAlgorithm(self.grid, self.grid.get_neighbors, manhattan_heuristic)
 
 
     def update_algorithm(self):

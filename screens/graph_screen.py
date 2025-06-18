@@ -15,6 +15,7 @@ from screens.screen_interface import ScreenInterface
 from classes.graph import Graph, GraphNode
 from definitions.graph_constants import  GRAPH_AREA_MARGIN, GRAPH_AREA_SIZE, SAFE_MIN_AREA, SAFE_MAX_AREA
 from screens.button_panel_mixin import ButtonPanelMixin
+from classes.graph import euclidean_graph_heuristic
 
 class GraphScreen(ScreenInterface, ButtonPanelMixin):
 
@@ -179,11 +180,11 @@ class GraphScreen(ScreenInterface, ButtonPanelMixin):
             elif idx == 3:
                 self.algorithm = DFSAlgorithm(self.graph, self.graph.get_neighbors)
             elif idx == 4:
-                self.algorithm = DijkstraAlgorithm(self.graph, self.graph.get_neighbors)
+                self.algorithm = DijkstraAlgorithm(self.graph, self.graph.get_neighbors,self.graph.get_cost)
             elif idx == 5:
-                self.algorithm = AStarAlgorithm(self.graph, self.graph.get_neighbors)
+                self.algorithm = AStarAlgorithm(self.graph, self.graph.get_neighbors, self.graph.get_cost, euclidean_graph_heuristic)
             elif idx == 6:
-                self.algorithm = GreedyBestFirstAlgorithm(self.graph, self.graph.get_neighbors)
+                self.algorithm = GreedyBestFirstAlgorithm(self.graph, self.graph.get_neighbors, euclidean_graph_heuristic)
 
 
     def run(self):
@@ -220,8 +221,7 @@ class GraphScreen(ScreenInterface, ButtonPanelMixin):
     
     def get_edge_under_mouse(self, mouse_x, mouse_y, threshold=8):
         for edge in self.graph.edges:
-            node1, node2 = edge  # or however your edge is stored
-            if self.is_mouse_near_edge(node1.x, node1.y, node2.x, node2.y, mouse_x, mouse_y, threshold):
+            if self.is_mouse_near_edge(edge.node1.x, edge.node1.y, edge.node2.x, edge.node2.y, mouse_x, mouse_y, threshold):
                 return edge
         return None
 
@@ -243,7 +243,7 @@ class GraphScreen(ScreenInterface, ButtonPanelMixin):
                 
             edge = self.get_edge_under_mouse(pos_x, pos_y)
             if edge:
-                self.graph.remove_edge(*edge)
+                self.graph.remove_edge(edge.node1, edge.node2)
 
         
     def draw(self):

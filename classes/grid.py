@@ -233,12 +233,12 @@ class Grid:
         if new_state.is_start():
             start_pos = self.get_start()
             if start_pos is not None:
-                self.grid[start_pos[0]][start_pos[1]].change_state(State.ACTIVATED)
+                start_pos.change_state(State.ACTIVATED)
             self.grid[row][col].change_state(State.START)
         elif new_state.is_goal():
             goal_pos = self.get_goal()
             if goal_pos is not None:
-                self.grid[goal_pos[0]][goal_pos[1]].change_state(State.ACTIVATED)
+                goal_pos.change_state(State.ACTIVATED)
             self.grid[row][col].change_state(State.GOAL)
 
         # Ensures that if activating a square that is currently the start,
@@ -270,3 +270,19 @@ class Grid:
             n_row, n_col = square.row + d_row, square.col + d_col
             if 0 <= n_row < self.height and 0 <= n_col < self.width:
                 yield self.grid[n_row][n_col]
+                
+    def get_cost(self, node, neighbor):
+        """
+        Returns the cost of moving from one square to its neighbor.
+        
+        Arguments:
+            node (Square): The current square.
+            neighbor (Square): The neighboring square.
+            
+        Returns:
+            int: The cost of moving from node to neighbor.
+        """
+        return neighbor.cost
+                
+def manhattan_heuristic(node, goal):
+    return abs(node.row - goal.row) + abs(node.col - goal.col)
