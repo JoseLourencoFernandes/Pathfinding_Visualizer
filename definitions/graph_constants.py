@@ -1,3 +1,8 @@
+"""
+This module defines constants related to the graphical representation of the grid.
+It includes constants for the graph area size, node radius, and safe area margins.
+"""
+
 from definitions.global_constants import SCREEN_WIDTH, SCREEN_HEIGHT
 
 GRAPH_AREA_MARGIN = 5   # Horizontal margin from the window edge

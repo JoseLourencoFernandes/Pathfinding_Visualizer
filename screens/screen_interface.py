@@ -5,11 +5,14 @@ class ScreenInterface:
     It includes methods for handling events, processing events, running the screen logic,
     and drawing the screen.
     
-    Attributes:
-        screen (pygame.Surface): The Pygame surface where the screen will be drawn.
-        app_state (GlobalAppState): The global application state that holds the current state of the app.
+    :param screen: The Pygame surface where the screen will be drawn.
+    :type screen: pygame.Surface
+    :param app_state: The global application state that holds the current state of the app.
+    :type app_state: GlobalAppState
     """
+    
     def __init__(self, screen, app_state):
+        """ Constructor for the ScreenInterface class. """
         self.screen = screen
         self.app_state = app_state
 

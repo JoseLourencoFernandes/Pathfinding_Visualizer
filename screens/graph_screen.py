@@ -71,9 +71,8 @@ class GraphScreen(ScreenInterface, ButtonPanelMixin):
         self.arrow_img = pygame.transform.smoothscale(self.arrow_img, (30, 30))
 
         # Back button to return to the main menu
-        self.back_button = Button(SCREEN_WIDTH - 50, 10, 40, 40, color=Color.LIGHTBLUE, icon =self.arrow_img,)
-        
-        
+        self.back_button = Button(pygame.Rect(SCREEN_WIDTH - 50, 10, 40, 40), color=Color.LIGHTBLUE, icon=self.arrow_img)
+
         # Create buttons
         self.buttons = self.create_default_buttons(object="Node", include_maze_button=False)
         

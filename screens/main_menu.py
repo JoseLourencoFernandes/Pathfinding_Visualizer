@@ -26,26 +26,32 @@ class MainMenuScreen(ScreenInterface):
         self.button_font = pygame.font.SysFont(None, BUTTON_FONT_SIZE)
         self.buttons = [
             Button(
-                MENU_BUTTON_X,
-                MENU_BUTTON_Y,
-                MENU_BUTTON_WIDTH,
-                MENU_BUTTON_HEIGHT,
+                pygame.Rect(
+                    MENU_BUTTON_X,
+                    MENU_BUTTON_Y,
+                    MENU_BUTTON_WIDTH,
+                    MENU_BUTTON_HEIGHT
+                ),
                 "2D Grid",
                 Color.LIGHTGREEN
             ),
             Button(
-                MENU_BUTTON_X,
-                MENU_BUTTON_Y + MENU_BUTTON_HEIGHT + MENU_BUTTON_SPACING,
-                MENU_BUTTON_WIDTH,
-                MENU_BUTTON_HEIGHT,
+                pygame.Rect(
+                    MENU_BUTTON_X,
+                    MENU_BUTTON_Y + MENU_BUTTON_HEIGHT + MENU_BUTTON_SPACING,
+                    MENU_BUTTON_WIDTH,
+                    MENU_BUTTON_HEIGHT
+                ),
                 "2D Grid Weighted",
                 Color.LIGHTBLUE
             ),
             Button(
-                MENU_BUTTON_X,
-                MENU_BUTTON_Y + 2 * (MENU_BUTTON_HEIGHT + MENU_BUTTON_SPACING),
-                MENU_BUTTON_WIDTH,
-                MENU_BUTTON_HEIGHT,
+                pygame.Rect(
+                    MENU_BUTTON_X,
+                    MENU_BUTTON_Y + 2 * (MENU_BUTTON_HEIGHT + MENU_BUTTON_SPACING),
+                    MENU_BUTTON_WIDTH,
+                    MENU_BUTTON_HEIGHT
+                ),
                 "Graph",
                 Color.LIGHTCORAL
             )

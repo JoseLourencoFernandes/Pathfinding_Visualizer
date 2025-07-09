@@ -78,8 +78,8 @@ class BaseGridScreen(ScreenInterface, ButtonPanelMixin):
         self.arrow_img = pygame.transform.smoothscale(self.arrow_img, (30, 30))
 
         # Back button to return to the main menu
-        self.back_button = Button(SCREEN_WIDTH - 50, 10, 40, 40, color=Color.LIGHTBLUE, icon =self.arrow_img,)
-        
+        self.back_button = Button(pygame.Rect(SCREEN_WIDTH - 50, 10, 40, 40), color=Color.LIGHTBLUE, icon=self.arrow_img)
+
         # Initialize program flags
         self.algorithm = None
         self.start_time = None
@@ -305,9 +305,9 @@ class BaseGridScreen(ScreenInterface, ButtonPanelMixin):
             elif idx == 3:
                 self.algorithm = DFSAlgorithm(self.grid, self.grid.get_neighbors)
             elif idx == 4:
-                self.algorithm = DijkstraAlgorithm(self.grid, self.grid.get_neighbors,  self.grid.get_cost)
+                self.algorithm = DijkstraAlgorithm(self.grid, self.grid.get_neighbors,  self.grid.get_moving_cost)
             elif idx == 5:
-                self.algorithm = AStarAlgorithm(self.grid, self.grid.get_neighbors, self.grid.get_cost , manhattan_heuristic)
+                self.algorithm = AStarAlgorithm(self.grid, self.grid.get_neighbors, self.grid.get_moving_cost , manhattan_heuristic)
             elif idx == 6:
                 self.algorithm = GreedyBestFirstAlgorithm(self.grid, self.grid.get_neighbors, manhattan_heuristic)
 
