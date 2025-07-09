@@ -8,14 +8,15 @@ import time
 from definitions.global_constants import Screen, SCREEN_WIDTH, SCREEN_HEIGHT
 from definitions.grid_constants import SQUARE_SIZE, SPACING, GRID_BUTTON_X, GRID_BUTTON_Y, GRID_BUTTON_WIDTH, GRID_BUTTON_HEIGHT, GRID_BUTTON_SPACING, TIME_TEXT_X, TIME_TEXT_Y
 from definitions.colors import Color
-from definitions.states import SquareState
+from definitions.states import State
 from algorithms import BFSAlgorithm, DFSAlgorithm, DijkstraAlgorithm, AStarAlgorithm, GreedyBestFirstAlgorithm, generate_maze_prim
 from classes.grid import Grid
 from classes.button import Button
 from screens.screen_interface import ScreenInterface
+from screens.button_panel_mixin import ButtonPanelMixin
+from classes.grid import manhattan_heuristic
 
-
-class BaseGridScreen(ScreenInterface):
+class BaseGridScreen(ScreenInterface, ButtonPanelMixin):
     """
     Base class for 2D grid screens.
     This class provides the basic functionality for handling a 2D grid, including
@@ -69,17 +70,7 @@ class BaseGridScreen(ScreenInterface):
             sys.exit(1)
 
         # Create buttons
-        self.buttons = [
-            Button(GRID_BUTTON_X, GRID_BUTTON_Y, GRID_BUTTON_WIDTH, GRID_BUTTON_HEIGHT, "Set Start", Color.LIGHTGREEN),
-            Button(GRID_BUTTON_X, GRID_BUTTON_Y + (GRID_BUTTON_HEIGHT + GRID_BUTTON_SPACING), GRID_BUTTON_WIDTH, GRID_BUTTON_HEIGHT, "Set Goal", Color.TOMATO),
-            Button(GRID_BUTTON_X, GRID_BUTTON_Y + 2*(GRID_BUTTON_HEIGHT + GRID_BUTTON_SPACING), GRID_BUTTON_WIDTH, GRID_BUTTON_HEIGHT, "BFS Algorithm", Color.TANGERINE),
-            Button(GRID_BUTTON_X, GRID_BUTTON_Y + 3*(GRID_BUTTON_HEIGHT + GRID_BUTTON_SPACING), GRID_BUTTON_WIDTH, GRID_BUTTON_HEIGHT, "DFS Algorithm", Color.TANGERINE),
-            Button(GRID_BUTTON_X, GRID_BUTTON_Y + 4*(GRID_BUTTON_HEIGHT + GRID_BUTTON_SPACING), GRID_BUTTON_WIDTH, GRID_BUTTON_HEIGHT, "Dijkstra Algorithm", Color.TANGERINE),
-            Button(GRID_BUTTON_X, GRID_BUTTON_Y + 5*(GRID_BUTTON_HEIGHT + GRID_BUTTON_SPACING), GRID_BUTTON_WIDTH, GRID_BUTTON_HEIGHT, "A* Algorithm", Color.TANGERINE),
-            Button(GRID_BUTTON_X, GRID_BUTTON_Y + 6*(GRID_BUTTON_HEIGHT + GRID_BUTTON_SPACING), GRID_BUTTON_WIDTH, GRID_BUTTON_HEIGHT, "Greedy Best First Algorithm", Color.TANGERINE),
-            Button(GRID_BUTTON_X, GRID_BUTTON_Y + 7*(GRID_BUTTON_HEIGHT + GRID_BUTTON_SPACING), GRID_BUTTON_WIDTH, GRID_BUTTON_HEIGHT, "Reset", Color.TANGERINE),
-            Button(GRID_BUTTON_X, GRID_BUTTON_Y + 8*(GRID_BUTTON_HEIGHT + GRID_BUTTON_SPACING), GRID_BUTTON_WIDTH, GRID_BUTTON_HEIGHT, "Generate Maze (Using Prim Algorithm)", Color.LIGHTBLUE)
-        ]
+        self.buttons = self.create_default_buttons(object="Square", include_maze_button=True)
         
         # Load the arrow image for the back button
         arrow_path = os.path.join("assets", "arrow_left.png")
@@ -112,14 +103,14 @@ class BaseGridScreen(ScreenInterface):
         # Check if user has request to go back to the main menu
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
             if self.back_button.is_clicked(mouse_pos):
-                self.app_state.currently_screen = Screen.MAIN_MENU
+                self.app_state.current_screen = Screen.MAIN_MENU
                 return  # Exit the event handling if back button is clicked
 
         elif event.type == pygame.KEYDOWN:
             # Check for key presses to quit or reset the grid
             # If the Escape key is pressed, go back to the main menu
             if event.key == pygame.K_ESCAPE:
-                self.app_state.currently_screen = Screen.MAIN_MENU
+                self.app_state.current_screen = Screen.MAIN_MENU
             # If Ctrl+Q is pressed, quit the application
             elif event.key == pygame.K_q and (pygame.key.get_mods() & pygame.KMOD_CTRL):
                 self.local_app_state.running = False
@@ -132,9 +123,9 @@ class BaseGridScreen(ScreenInterface):
             # If the left mouse button is pressed and the mouse is over the grid set start or goal square
             if event.button == 1 and in_grid and not over_button:
                 if self.local_app_state.set_start_mode:
-                    self._set_button_mode(pos_x, pos_y, SquareState.START)
+                    self._set_button_mode(pos_x, pos_y, State.START)
                 elif self.local_app_state.set_goal_mode:
-                    self._set_button_mode(pos_x, pos_y, SquareState.GOAL)
+                    self._set_button_mode(pos_x, pos_y, State.GOAL)
 
             # If the button is pressed and the mouse is over a button, handle the button click
             for idx, button in enumerate(self.buttons):
@@ -250,12 +241,12 @@ class BaseGridScreen(ScreenInterface):
         if self.local_app_state.grid_full_reset == False:
             for row in range(self.grid.height):
                 for col in range(self.grid.width):
-                    self.grid.get(row, col).change_state(self.grid_reset_state[row][col])
+                    self.grid.get((row, col)).change_state(self.grid_reset_state[row][col])
             self.local_app_state.grid_full_reset = True
         else:
             for row in range(self.grid.height):
                 for col in range(self.grid.width):
-                    self.grid.get(row, col).change_state(SquareState.ACTIVATED)
+                    self.grid.get((row, col)).change_state(State.ACTIVATED)
 
 
     def handle_button_click(self, idx):
@@ -310,15 +301,15 @@ class BaseGridScreen(ScreenInterface):
             self.local_app_state.running_algorithm = True
 
             if idx == 2:
-                self.algorithm = BFSAlgorithm(self.grid)
+                self.algorithm = BFSAlgorithm(self.grid, self.grid.get_neighbors)
             elif idx == 3:
-                self.algorithm = DFSAlgorithm(self.grid)
+                self.algorithm = DFSAlgorithm(self.grid, self.grid.get_neighbors)
             elif idx == 4:
-                self.algorithm = DijkstraAlgorithm(self.grid)
+                self.algorithm = DijkstraAlgorithm(self.grid, self.grid.get_neighbors,  self.grid.get_cost)
             elif idx == 5:
-                self.algorithm = AStarAlgorithm(self.grid)
+                self.algorithm = AStarAlgorithm(self.grid, self.grid.get_neighbors, self.grid.get_cost , manhattan_heuristic)
             elif idx == 6:
-                self.algorithm = GreedyBestFirstAlgorithm(self.grid)
+                self.algorithm = GreedyBestFirstAlgorithm(self.grid, self.grid.get_neighbors, manhattan_heuristic)
 
 
     def update_algorithm(self):
@@ -330,7 +321,7 @@ class BaseGridScreen(ScreenInterface):
         self.local_app_state.execution_time = time.time() - self.local_app_state.start_time  # Update execution time
         if not self.algorithm.step():
             self.local_app_state.running_algorithm = False
-            self.algorithm.highlight_path()  # Highlight the path after BFS completes
+            self.algorithm.highlight_path()  # Highlight the path after algorithm completes
 
 
 
@@ -351,12 +342,12 @@ class BaseGridScreen(ScreenInterface):
             # Reset the grid if an algorithm has been runned before
             if self.local_app_state.runned_algorithm:
                 self._reset_button()  
-            self.grid.change_state(pos_y, pos_x, SquareState.DEACTIVATED)
+            self.grid.change_state(pos_y, pos_x, State.DEACTIVATED)
         elif in_grid and not over_button and mouse_state[2] and not self.local_app_state.ignore_drag:
             # Reset the grid if an algorithm has been runned before
             if self.local_app_state.runned_algorithm:
                 self._reset_button()  
-            self.grid.change_state(pos_y, pos_x, SquareState.ACTIVATED)
+            self.grid.change_state(pos_y, pos_x, State.ACTIVATED)
 
 
 class Grid2DScreen(BaseGridScreen):

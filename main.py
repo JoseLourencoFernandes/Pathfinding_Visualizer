@@ -7,6 +7,7 @@ from app_state import GlobalAppState
 from screens.main_menu import MainMenuScreen
 from screens.grid_2d import Grid2DScreen
 from screens.grid_2d import Grid2DWeightedScreen
+from screens.graph_screen import GraphScreen
 
 def main():
     """
@@ -30,10 +31,11 @@ def main():
         Screen.MAIN_MENU: MainMenuScreen(screen, app_state),
         Screen.GRID_2D: Grid2DScreen(screen, app_state),
         Screen.GRID_2D_WEIGHTED: Grid2DWeightedScreen(screen, app_state),
+        Screen.GRAPH: GraphScreen(screen, app_state)
     }
     
     # Define the previous screen to track the last active screen
-    previous_screen = app_state.currently_screen
+    previous_screen = app_state.current_screen
 
     # Set up the clock for a decent framerate
     clock = pygame.time.Clock()
@@ -55,23 +57,23 @@ def main():
                     running = False
                     
             # Handle events for the currently active screen
-            screens[app_state.currently_screen].handle_event(event)
+            screens[app_state.current_screen].handle_event(event)
             
             # Handle screen transitions and ignore drag state
-            if app_state.currently_screen != previous_screen:
-                if app_state.currently_screen in (Screen.GRID_2D, Screen.GRID_2D_WEIGHTED):
-                    screens[app_state.currently_screen].local_app_state.ignore_drag = True
-                previous_screen = app_state.currently_screen
+            if app_state.current_screen != previous_screen:
+                if app_state.current_screen in (Screen.GRID_2D, Screen.GRID_2D_WEIGHTED, Screen.GRAPH):
+                    screens[app_state.current_screen].local_app_state.ignore_drag = True
+                previous_screen = app_state.current_screen
         
         # If user as requested to quit, exit the loop
         if not running:
             break
         
         # Run the logic for the currently active screen
-        screens[app_state.currently_screen].run()
+        screens[app_state.current_screen].run()
         
         # Draw the currently active screen
-        screens[app_state.currently_screen].draw()
+        screens[app_state.current_screen].draw()
         
         # flip() the display to put your work on screen
         pygame.display.flip()
