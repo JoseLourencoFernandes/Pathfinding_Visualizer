@@ -6,6 +6,7 @@ from enum import Enum
 from definitions.colors import Color
 
 class State(Enum):
+    """ Enum representing the state of a node in pathfinding object. """
     DEACTIVATED = 0
     ACTIVATED = 1
     START = 2
@@ -13,7 +14,6 @@ class State(Enum):
     VISITED = 4
     PATH = 5
     FRONTIER = 6
-    
     
     def is_deactivated(self):
         return self == State.DEACTIVATED
@@ -36,15 +36,32 @@ class State(Enum):
     def is_frontier(self):
         return self == State.FRONTIER
     
-    def get_color(self):
-        return State._color_map[self]
+    def get_color(self, context):
+        """ Get color based on context (grid or graph). """
+        if context == "graph":
+            return State._graph_color_map[self]
+        elif context == "grid":
+            return State._grid_color_map[self]
 
     def should_show_cost(self):
+        """ Determine if the cost should be shown for this state. """
         return self in {State.ACTIVATED, State.VISITED, State.PATH, State.FRONTIER}
 
-State._color_map = {
+# Grid color scheme
+State._grid_color_map = {
     State.DEACTIVATED: Color.BROWN,
     State.ACTIVATED: Color.GRAY,
+    State.START: Color.GREEN,
+    State.GOAL: Color.RED,
+    State.VISITED: Color.PALEGREEN,
+    State.PATH: Color.LIGHTBLUE,
+    State.FRONTIER: Color.ORANGE,
+}
+
+# Graph color scheme
+State._graph_color_map = {
+    State.DEACTIVATED: Color.BROWN,
+    State.ACTIVATED: Color.WHITE,
     State.START: Color.GREEN,
     State.GOAL: Color.RED,
     State.VISITED: Color.PALEGREEN,

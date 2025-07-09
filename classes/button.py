@@ -44,7 +44,6 @@ class Button:
         :param active: A boolean indicating whether the button is active, defaults to False.
         :type active: bool, optional
         """
-        
         # Draw the button rectangle with a color change if active
         color = (min(self.color[0]+40,255), min(self.color[1]+40,255), min(self.color[2]+40,255)) if active else self.color
         pygame.draw.rect(screen, color, self.rect)

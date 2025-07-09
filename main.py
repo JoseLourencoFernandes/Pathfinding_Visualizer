@@ -16,10 +16,10 @@ def main():
     creates the main window, and manages the event loop for the application.
     It handles user input, updates the current screen based on user actions, and draws the appropriate content.
     The main loop continues until the user decides to quit the application.
-    """""
+    """
     
     # Initialize the global application state
-    app_state = GlobalAppState()
+    app_state: GlobalAppState = GlobalAppState()
 
     # Initialize Pygame and create the main window
     pygame.init()

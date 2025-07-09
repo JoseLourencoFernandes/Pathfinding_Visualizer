@@ -18,6 +18,7 @@ from screens.button_panel_mixin import ButtonPanelMixin
 from classes.graph import euclidean_graph_heuristic
 
 class GraphScreen(ScreenInterface, ButtonPanelMixin):
+    
 
     def __init__(self, screen, app_state):
         super().__init__(screen, app_state)

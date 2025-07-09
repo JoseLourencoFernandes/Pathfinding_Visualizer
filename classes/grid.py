@@ -73,8 +73,7 @@ class Square:
         :param screen: The screen on which to draw the square.
         :param show_cost: Whether to display the cost of the square.
         """
-
-        color = self.state.get_color()
+        color = self.state.get_color(context="grid")
         pygame.draw.rect(screen, color, (self.x, self.y, self.size, self.size))
         if show_cost and self.state.should_show_cost():
             self.draw_cost(screen)
@@ -167,7 +166,6 @@ class Grid:
         :return: The square at the specified position.
         :rtype: Square
         """
-        
         if not isinstance(pos, tuple) or len(pos) != 2:
             raise ValueError("Position must be a tuple (row, col)")
         
@@ -183,7 +181,6 @@ class Grid:
         :param screen: The screen on which to draw the grid.
         :type screen: pygame.Surface
         """
-        
         for row in self.grid:
             for square in row:
                 square.draw(screen, self.customizable_cost)
@@ -195,7 +192,6 @@ class Grid:
         :return: The square representing the start position, or None if not found.
         :rtype: Square or None
         """
-        
         for row in self.grid:
             for square in row:
                 if square.state.is_start():
@@ -209,7 +205,6 @@ class Grid:
         :return: The square representing the goal position, or None if not found.
         :rtype: Square or None
         """
-
         for row in self.grid:
             for square in row:
                 if square.state.is_goal():
@@ -231,7 +226,6 @@ class Grid:
         :raises ValueError: If new_state is not an instance of State Enum.
         :raises IndexError: If the row or column index is out of bounds.
         """
-        
         if not isinstance(new_state, State):
             raise ValueError("new_state must be an instance of State Enum")
 
@@ -280,7 +274,6 @@ class Grid:
         :return: A list of neighboring squares.
         :rtype: Iterator[Square]
         """
-
         for d_row, d_col in [(-1,0),(1,0),(0,-1),(0,1)]:
             n_row, n_col = square.row + d_row, square.col + d_col
             if 0 <= n_row < self.height and 0 <= n_col < self.width:
@@ -298,21 +291,9 @@ class Grid:
         :return: The cost of moving to the neighbor square.
         :rtype: int
         """
-        
         return neighbor.cost
 
 
 def manhattan_heuristic(node: Square, goal: Square) -> int:
-    """ 
-    Calculates the Manhattan distance heuristic between two squares.
-    
-    :param node: The current square.
-    :type node: Square
-    :param goal: The goal square.
-    :type goal: Square
-    
-    :return: The Manhattan distance between the node and the goal.
-    :rtype: int
-    """
-    
+    """ Calculates the Manhattan distance heuristic between two squares. """
     return abs(node.row - goal.row) + abs(node.col - goal.col)

@@ -1,7 +1,8 @@
 import heapq
 import random
 from definitions.states import State
-
+from classes.grid import Grid
+from classes.graph import Graph
 
 class Algorithm:
     """
@@ -10,20 +11,37 @@ class Algorithm:
     including methods for resetting the algorithm, stepping through the algorithm,
     and highlighting the path found.
     
-    Attributes:
-        structure (Grid or Graph): The grid or graph structure on which the algorithm operates.
-        visited (set): A set of visited nodes.
-        parents (dict): A dictionary mapping each node to its parent node.
-        path (list): A list to store the path found by the algorithm.
-        found (bool): A flag indicating whether the goal has been found.
+    :param structure: The grid or graph structure on which the algorithm operates.
+    :type structure: Grid or Graph
+    :param get_neighbors: A callable that returns the neighbors of a given node.
+    :type get_neighbors: callable
+    :param queue: A list to manage the nodes to be processed by the algorithm.
+    :type queue: list
+    :param visited: A set to keep track of visited nodes.
+    :type visited: set
+    :param parents: A dictionary mapping each node to its parent node.
+    :type parents: dict
+    :param path: A list to store the path found by the algorithm.
+    :type path: list
+    :param found: A flag indicating whether the goal has been found.
+    :type found: bool
     """
-    def __init__(self, structure, get_neighbors):
+    structure: Grid | Graph
+    get_neighbors: callable
+    queue: list
+    visited: set
+    parents: dict
+    path: list
+    found: bool
+
+    def __init__(self, structure: Graph | Grid, get_neighbors: callable) -> None:
+        """ Constructor for the Algorithm class. """
         self.structure = structure
         self.get_neighbors = get_neighbors
         self.reset()
 
 
-    def reset(self):
+    def reset(self) -> None:
         """
         Resets the algorithm state.
         This method clears the visited nodes, parents mapping, path list,
@@ -35,18 +53,20 @@ class Algorithm:
         self.path = []
         self.found = False
     
-    def step(self):
+    def step(self) -> None:
         """
         Executes a single step of the algorithm.
         This method should be implemented by subclasses to define the specific
         behavior of the algorithm.
         
-        Returns:
-            bool: True if the algorithm can continue processing, False if it has completed.
+        :return: A boolean indicating whether the algorithm can continue processing.
+        :rtype: bool
+        
+        :raises NotImplementedError: If the method is not implemented in a subclass.
         """
         raise NotImplementedError
     
-    def highlight_path(self):
+    def highlight_path(self) -> None:
         """
         Highlights the path found by the algorithm.
         This method traces back from the goal node to the start node,
@@ -72,11 +92,11 @@ class BFSAlgorithm(Algorithm):
     Breadth-First Search (BFS) algorithm for pathfinding.
     This class implements the BFS algorithm to find the shortest path
     from the start square to the goal square in the grid.
-    """ 
-    def __init__(self, structure, get_neighbors):
+    """
+    def __init__(self, structure: Graph | Grid, get_neighbors: callable) -> None:
         super().__init__(structure, get_neighbors)
 
-    def reset(self):
+    def reset(self) -> None:
         super().reset()
         self.queue = []
         start = self.structure.get_start()
@@ -85,7 +105,7 @@ class BFSAlgorithm(Algorithm):
             self.visited.add(start)
             self.parents[start] = None
 
-    def step(self):
+    def step(self) -> None:
         if not self.queue or self.found:
             return False  # end processing
         node = self.queue.pop(0)
@@ -114,10 +134,10 @@ class DFSAlgorithm(Algorithm):
     This class implements the DFS algorithm to find a path from the start square
     to the goal square in the grid.
     """
-    def __init__(self, structure, get_neighbors):
+    def __init__(self, structure: Graph | Grid, get_neighbors: callable) -> None:
         super().__init__(structure, get_neighbors)
 
-    def reset(self):
+    def reset(self) -> None:
         super().reset()
         self.stack = []
         start = self.structure.get_start()
@@ -126,7 +146,7 @@ class DFSAlgorithm(Algorithm):
             self.visited.add(start)
             self.parents[start] = None
 
-    def step(self):
+    def step(self) -> None:
         if not self.stack or self.found:
             return False  # end processing
         node = self.stack.pop()
@@ -156,11 +176,11 @@ class DijkstraAlgorithm(Algorithm):
     This class implements Dijkstra's algorithm to find the shortest path
     from the start square to the goal square in the grid.
     """
-    def __init__(self, structure, get_neighbors, get_cost):
+    def __init__(self, structure: Graph | Grid, get_neighbors: callable, get_cost: callable) -> None:
         self.get_cost = get_cost
         super().__init__(structure, get_neighbors)
 
-    def reset(self):
+    def reset(self) -> None:
         super().reset()
         self.heap = []
         self.costs = {}
@@ -172,7 +192,7 @@ class DijkstraAlgorithm(Algorithm):
             self.parents[start] = None
             self.costs[start] = 0
 
-    def step(self):
+    def step(self) -> None:
         if not self.heap or self.found:
             return False
         cost, _, node = heapq.heappop(self.heap)
@@ -203,12 +223,12 @@ class AStarAlgorithm(Algorithm):
     This class implements the A* algorithm to find the shortest path
     from the start square to the goal square in the grid, using a heuristic.
     """
-    def __init__(self, structure, get_neighbors, get_cost, heuristic):
+    def __init__(self, structure: Graph | Grid, get_neighbors: callable, get_cost: callable, heuristic: callable) -> None:
         self.get_cost = get_cost
         self.heuristic = heuristic
         super().__init__(structure, get_neighbors)
 
-    def reset(self):
+    def reset(self) -> None:
         super().reset()
         self.heap = []
         self.costs = {}
@@ -222,7 +242,7 @@ class AStarAlgorithm(Algorithm):
             self.parents[start] = None
             self.costs[start] = 0
 
-    def step(self):
+    def step(self) -> None:
         if not self.heap or self.found:
             return False
         priority, _, node = heapq.heappop(self.heap)
@@ -253,12 +273,11 @@ class GreedyBestFirstAlgorithm(Algorithm):
     This class implements the Greedy Best-First Search algorithm to find a path
     from the start square to the goal square in the grid, using a heuristic.
     """
-    def __init__(self, structure, get_neighbors, heuristic):
+    def __init__(self, structure: Graph | Grid, get_neighbors: callable, heuristic: callable) -> None:
         self.heuristic = heuristic
         super().__init__(structure, get_neighbors)
         
-
-    def reset(self):
+    def reset(self) -> None:
         super().reset()
         self.heap = []
         self.counter = itertools.count()
@@ -270,7 +289,7 @@ class GreedyBestFirstAlgorithm(Algorithm):
             self.visited.add(start)
             self.parents[start] = None
 
-    def step(self):
+    def step(self) -> None:
         if not self.heap or self.found:
             return False
         _, _, node = heapq.heappop(self.heap)
@@ -293,15 +312,15 @@ class GreedyBestFirstAlgorithm(Algorithm):
         return True
     
     
-def generate_maze_prim(grid):
+def generate_maze_prim(grid: Grid) -> None:
     """
     Generates a maze using Prim's algorithm.
     This function initializes all squares as walls (deactivated) and then
     creates a maze by activating squares in a random manner, ensuring that
     the maze is connected and has no loops.
     
-    Arguments:
-        grid (Grid): The grid on which the maze will be generated.
+    :param grid: The grid on which the maze will be generated.
+    :type grid: Grid
     """
 
     # Inicialize all squares as walls (deactivated)

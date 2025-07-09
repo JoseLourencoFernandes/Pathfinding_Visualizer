@@ -1,3 +1,6 @@
+import pygame
+from app_state import GlobalAppState
+
 class ScreenInterface:
     """
     Abstract base class for all screens in the application.
@@ -10,18 +13,18 @@ class ScreenInterface:
     :param app_state: The global application state that holds the current state of the app.
     :type app_state: GlobalAppState
     """
-    
-    def __init__(self, screen, app_state):
+
+    def __init__(self, screen: pygame.Surface, app_state: GlobalAppState) -> None:
         """ Constructor for the ScreenInterface class. """
         self.screen = screen
         self.app_state = app_state
 
-    def process_events(self):
+    def process_events(self) -> None:
         raise NotImplementedError
 
-    def run(self):
+    def run(self) -> None:
         raise NotImplementedError
-    
-    def draw(self, screen):
+
+    def draw(self) -> None:
         raise NotImplementedError
     

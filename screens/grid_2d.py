@@ -5,6 +5,7 @@ import pygame
 import math
 import copy
 import time
+from app_state import GlobalAppState
 from definitions.global_constants import Screen, SCREEN_WIDTH, SCREEN_HEIGHT
 from definitions.grid_constants import SQUARE_SIZE, SPACING, GRID_BUTTON_X, GRID_BUTTON_Y, GRID_BUTTON_WIDTH, GRID_BUTTON_HEIGHT, GRID_BUTTON_SPACING, TIME_TEXT_X, TIME_TEXT_Y
 from definitions.colors import Color
@@ -23,32 +24,39 @@ class BaseGridScreen(ScreenInterface, ButtonPanelMixin):
     initializing the grid, handling events, running algorithms, and drawing the grid and buttons.
     It is designed to be extended by specific grid screens, such as Grid2DScreen and Grid2DWeightedScreen.
     
-    Attributes:
-        screen (pygame.Surface): The screen to draw the grid on.
-        app_state (GlobalAppState): The global application state.
-        local_app_state (Grid2DAppState): The local application state for the grid.
-        customizable_cost (bool): Flag to indicate if the grid allows customizable costs.
-        font (pygame.font.Font): The font used for rendering text.
-        square_size (int): The size of each square in the grid.
-        spacing (int): The spacing between squares in the grid.
-        grid (Grid): The grid object that holds the squares and their states.
-        buttons (list): List of buttons for user interaction.
-        back_button (Button): Button to go back to the main menu.
-        arrow_img (pygame.Surface): Image for the back button.
-        algorithm (Algorithm): The algorithm currently being run on the grid.
-        start_time (float): The time when the algorithm started running.
-        grid_reset_state (list): The state of the grid before the last algorithm was run.
-        
-    Methods:
-        handle_event(event): Process user input events.
-        run(): Update the algorithm step if an algorithm is running.
-        draw(): Draw the grid, buttons, and execution time text on the screen.
-        handle_mouse_drag(): Handle mouse dragging events to change the state of squares in the grid on run.
-        update_algorithm(): Update the algorithm state and execution time on run.
-        
+    :param screen: The Pygame surface where the grid is drawn.
+    :type screen: pygame.Surface
+    :param app_state: The global application state that holds the current state of the app.
+    :type app_state: GlobalAppState
+    :param local_app_state: The local application state for the grid, which can be either Grid2DAppState or Grid2DWeightedAppState.
+    :type local_app_state: Grid2DAppState | Grid2DWeightedAppState
+    :param customizable_cost: Flag to indicate if the grid allows customizable costs (default is False).
+    :type customizable_cost: bool
+    :param font: The font used for rendering text on the screen (default is None, which uses the default Pygame font).
+    :type font: pygame.font.Font | None
+    :param square_size: The size of each square in the grid (default is SQUARE_SIZE).
+    :type square_size: int
+    :param spacing: The spacing between squares in the grid (default is SPACING).
+    :type spacing: int
+    :param grid: The grid object that holds the squares and their states.
+    :type grid: Grid
+    :param buttons: List of buttons for user interaction (default is an empty list).
+    :type buttons: list[Button]
+    :param back_button: Button to go back to the main menu (default is None).
+    :type back_button: Button | None
+    :param arrow_img: Image for the back button (default is None).
+    :type arrow_img: pygame.Surface | None
+    :param algorithm: The algorithm currently being run on the grid (default is None).
+    :type algorithm: Algorithm | None
+    :param start_time: The time when the algorithm started running (default is None).
+    :type start_time: float | None
+    :param grid_reset_state: The state of the grid before the last algorithm was run (default is an empty list).
+    :type grid_reset_state: list[list[State]]
+
     This class is not meant to be instantiated directly, but rather serves as a base for other grid screens.
     """
-    def __init__(self, screen, app_state, size, customizable_cost=False, square_size=SQUARE_SIZE, spacing=SPACING, draw_centering_offset=0):
+    def __init__(self, screen: pygame.Surface, app_state: GlobalAppState, size: int, customizable_cost: bool = False, square_size: int = SQUARE_SIZE, spacing: int = SPACING, draw_centering_offset: int = 0) -> None:
+        """ Constructor for the BaseGridScreen class. """
         super().__init__(screen, app_state)
         
         # Initialize the local application state based on whether the grid is customizable or not
@@ -86,15 +94,15 @@ class BaseGridScreen(ScreenInterface, ButtonPanelMixin):
         self.grid_reset_state = []
 
 
-    def handle_event(self, event):
+    def handle_event(self, event: pygame.event.Event) -> None:
         """
         Handle user input events.
         This function processes mouse clicks, key presses, and mouse motion events.
         It updates the application state based on user interactions, such as clicking buttons
         or setting start and goal squares in the grid.
         
-        Arguments:
-            event (pygame.event.Event): The event to process.
+        :param event: The Pygame event to handle.
+        :type event: pygame.event.Event
         """     
         
         # Get the mouse position and check if it's within the grid
@@ -141,7 +149,7 @@ class BaseGridScreen(ScreenInterface, ButtonPanelMixin):
             self.local_app_state.ignore_drag = False
 
 
-    def run(self):
+    def run(self) -> None:
         """
         Run the screen logic.
         This function updates the algorithm step if an algorithm is running,
@@ -156,14 +164,13 @@ class BaseGridScreen(ScreenInterface, ButtonPanelMixin):
             self.handle_mouse_drag()
 
 
-    def draw(self):
+    def draw(self) -> None:
         """
         Draw the elements on the screen.
         This function draws the grid, buttons, and execution time text.
         It fills the screen with a background color and renders the grid and buttons.
         It also displays the execution time of the algorithm if it is running.
         """
-        
         # Draw the screen
         self.screen.fill(Color.BLACK)
         
@@ -187,18 +194,14 @@ class BaseGridScreen(ScreenInterface, ButtonPanelMixin):
                 button.draw(self.screen, self.font, active=self.local_app_state.running_algorithm)
 
 
-    def _get_mouse_position(self):
+    def _get_mouse_position(self) -> tuple[tuple, int, int, bool, bool]:
         """
         Get the current mouse position and check if it is within the grid.
         This function calculates the position of the mouse in terms of grid coordinates
         and checks if the mouse is over any of the buttons.
-        
-        Returns:
-            mouse_pos (tuple): The current mouse position (x, y).
-            pos_x (int): The x-coordinate of the mouse in grid terms.
-            pos_y (int): The y-coordinate of the mouse in grid terms.
-            in_grid (bool): True if the mouse is within the grid, False otherwise.
-            over_button (bool): True if the mouse is over any button, False otherwise.
+
+        :return: A tuple containing the mouse position, grid coordinates, and flags for grid and button presence.
+        :rtype: tuple[tuple, int, int, bool, bool]
         """
         mouse_pos = pygame.mouse.get_pos()
         pos_x = math.floor(mouse_pos[0] / (self.square_size + self.spacing))
@@ -209,17 +212,19 @@ class BaseGridScreen(ScreenInterface, ButtonPanelMixin):
         return mouse_pos, pos_x, pos_y, in_grid, over_button
 
 
-    def _set_button_mode(self, pos_x, pos_y, state_enum):
+    def _set_button_mode(self, pos_x: int, pos_y: int, state_enum: State) -> None:
         """
         Set the state of a square in the grid to a specific state.
         This function changes the state of a square in the grid based on the mouse position
         and the specified state enum. It also updates the application state to reflect
         that the user is no longer in set mode for start or goal.
-        
-        Arguments:
-            pos_x (int): The x-coordinate of the square in grid terms.
-            pos_y (int): The y-coordinate of the square in grid terms.
-            state_enum (State): The state to set for the square (START or GOAL).
+
+        :param pos_x: The x-coordinate of the square in grid terms.
+        :type pos_x: int
+        :param pos_y: The y-coordinate of the square in grid terms.
+        :type pos_y: int
+        :param state_enum: The state to set for the square (START or GOAL).
+        :type state_enum: State
         """
         self.grid.change_state(pos_y, pos_x, state_enum)
         self.local_app_state.set_goal_mode = False
@@ -227,7 +232,7 @@ class BaseGridScreen(ScreenInterface, ButtonPanelMixin):
         self.local_app_state.ignore_drag = True
 
 
-    def _reset_button(self):
+    def _reset_button(self) -> None:
         """
         Reset the grid to its latest relevant state.
         This function resets the grid to the state it was in before the last algorithm was run
@@ -249,13 +254,13 @@ class BaseGridScreen(ScreenInterface, ButtonPanelMixin):
                     self.grid.get((row, col)).change_state(State.ACTIVATED)
 
 
-    def handle_button_click(self, idx):
+    def handle_button_click(self, idx: int) -> None:
         """
         Handle button click events based on the index of the button clicked.
         This function updates the application state and initializes the algorithms.
         
-        Arguments:
-            idx -- The index of the button clicked.
+        :param idx: The index of the button clicked.
+        :type idx: int
         """
         
         # Deselect start and goal modes if any button is clicked
@@ -312,7 +317,7 @@ class BaseGridScreen(ScreenInterface, ButtonPanelMixin):
                 self.algorithm = GreedyBestFirstAlgorithm(self.grid, self.grid.get_neighbors, manhattan_heuristic)
 
 
-    def update_algorithm(self):
+    def update_algorithm(self) -> None:
         """
         Update the algorithm state and execution time.
         This function actualize the algorithm step and updates the execution time.
@@ -325,7 +330,7 @@ class BaseGridScreen(ScreenInterface, ButtonPanelMixin):
 
 
 
-    def handle_mouse_drag(self):
+    def handle_mouse_drag(self) -> None:
         """
         Handle mouse dragging events to change the state of squares in the grid.
         This function checks if the mouse is pressed and updates the state of the
@@ -355,13 +360,14 @@ class Grid2DScreen(BaseGridScreen):
     Screen for a 2D grid without customizable costs.
     This class inherits from BaseGridScreen and initializes the grid with customizable_cost set to False.
     
-    Attributes:
-        screen (pygame.Surface): The screen to draw the grid on.
-        app_state (GlobalAppState): The global application state.
+    :param screen: The Pygame surface where the grid is drawn.
+    :type screen: pygame.Surface
+    :param app_state: The global application state that holds the current state of the app.
+    :type app_state: GlobalAppState
     
     Customizable costs are not allowed in this screen.
     """
-    def __init__(self, screen, app_state):
+    def __init__(self, screen: pygame.Surface, app_state: GlobalAppState) -> None:
         # Define the size of the grid
         size = 29
         
@@ -383,13 +389,14 @@ class Grid2DWeightedScreen(BaseGridScreen):
     Screen for a 2D grid with customizable costs.
     This class inherits from BaseGridScreen and initializes the grid with customizable_cost set to True.
     
-    Attributes:
-        screen (pygame.Surface): The screen to draw the grid on.
-        app_state (GlobalAppState): The global application state.
-        
+    :param screen: The Pygame surface where the grid is drawn.
+    :type screen: pygame.Surface
+    :param app_state: The global application state that holds the current state of the app.
+    :type app_state: GlobalAppState
+
     Customizable costs are used in this screen.
     """
-    def __init__(self, screen, app_state):
+    def __init__(self, screen: pygame.Surface, app_state: GlobalAppState) -> None:
         # Define the size of the grid
         size = 19
         

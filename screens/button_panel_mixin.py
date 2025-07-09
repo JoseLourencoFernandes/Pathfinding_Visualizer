@@ -24,7 +24,6 @@ class ButtonPanelMixin:
         :return: A list of Button objects for the specified grid object.
         :rtype: list[Button]
         """
-        
         buttons = [
             Button(pygame.Rect(GRID_BUTTON_X, GRID_BUTTON_Y, GRID_BUTTON_WIDTH, GRID_BUTTON_HEIGHT), f"Set Start {object}", Color.LIGHTGREEN),
             Button(pygame.Rect(GRID_BUTTON_X, GRID_BUTTON_Y + (GRID_BUTTON_HEIGHT + GRID_BUTTON_SPACING), GRID_BUTTON_WIDTH, GRID_BUTTON_HEIGHT), f"Set Goal {object}", Color.TOMATO),

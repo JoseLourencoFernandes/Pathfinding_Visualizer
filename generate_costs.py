@@ -3,22 +3,19 @@ import sys
 from utils.writers import write_costs_to_file
 from utils.generator import generate_grid_costs
 
-def main(size = 19, min_cost = 1, max_cost = 9):
+def main(size: int = 19, min_cost: int = 1, max_cost: int = 9) -> None:
     """
     Main function to generate a grid of costs and write it to a file.
     
-    Arguments:
-        size (int): The size of the grid (size x size).
-        min_cost (int): The minimum cost value.
-        max_cost (int): The maximum cost value.
+    :param size: The size of the grid (size x size).
+    :type size: int
+    :param min_cost: The minimum cost value.
+    :type min_cost: int
+    :param max_cost: The maximum cost value.
+    :type max_cost: int
     """
-    # Generate the grid costs
     costs = generate_grid_costs(size, min_cost, max_cost)
-
-    # Write the costs to a file
     write_costs_to_file(costs, "costs.txt")
-    
-    # Print confirmation message
     print(f"Costs generated and written to 'costs.txt' with size {size}x{size} and costs between {min_cost} and {max_cost}.")
 
 if __name__ == "__main__":
@@ -40,5 +37,4 @@ if __name__ == "__main__":
         print("Error: min_cost must be less than max_cost.")
         sys.exit(1)
     
-    # Call the main function with parsed arguments
     main(size=args.size, min_cost=args.min_cost, max_cost=args.max_cost)    
