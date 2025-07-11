@@ -6,28 +6,24 @@ from definitions.graph_constants import NODE_RADIUS
 class GraphNode:
     """
     A class to represent a node in a graph.
-    Each node has a position (x, y), a cost, and a state.
+    Each node has a position (x, y) and a state.
     Provides methods to draw the node, check if a point is inside the node, and change its state.
     
     :param x: The x-coordinate of the node.
     :type x: int
     :param y: The y-coordinate of the node.
     :type y: int
-    :param cost: The cost associated with the node (default is 1).
-    :type cost: int
     :param state: The state of the node, default is State.ACTIVATED.
     :type state: State
     """
     x: int
     y: int
-    cost: int
     state: State
 
     def __init__(self, x: int, y: int) -> None:
         """ Constructor for GraphNode. """
         self.x = x
         self.y = y
-        self.cost = 1
         self.state = State.ACTIVATED
 
     def draw(self, screen: pygame.Surface) -> None:
@@ -83,13 +79,16 @@ class Edge:
     :type cost: int
     :param state: The state of the edge, default is State.ACTIVATED.
     :type state: State
+    :param cost_surface: A pygame.Surface to hold the cost text (default is None).
+    :type cost_surface: pygame.Surface | None
     """
     node1: GraphNode
     node2: GraphNode
     cost: int
     state: State
+    cost_surface: pygame.Surface
 
-    def __init__(self, node1: GraphNode, node2: GraphNode, cost=1) -> None:
+    def __init__(self, node1: GraphNode, node2: GraphNode, cost: int = 1) -> None:
         """ 
         Constructor for Edge. 
         Initializes the edge connecting two graph nodes with a cost and state.
@@ -113,7 +112,40 @@ class Edge:
         self.node2 = node2
         self.cost = cost
         self.state = State.ACTIVATED
-        
+        self.cost_surface = None  # Surface to hold the cost text
+
+    def get_cost_surface(self) -> pygame.Surface:
+        """
+        Returns the cost surface for the edge, rendering it if not already cached.
+
+        :return: The surface containing the cost text.
+        :rtype: pygame.Surface 
+        """
+        if self.cost_surface is None:
+            font_size = 18
+            font = pygame.font.Font(None, font_size)
+            
+            text_color = Color.BLACK
+            outline_color = Color.WHITE
+            
+            # Create text surface with outline effect
+            text_surface = font.render(str(self.cost), True, text_color)
+            outline_surface = font.render(str(self.cost), True, outline_color)
+            
+            w, h = text_surface.get_size()
+            self.cost_surface = pygame.Surface((w + 4, h + 4), pygame.SRCALPHA)
+            
+            # Draw outline by blitting the outline text at multiple positions
+            for dx in [-1, 0, 1]:
+                for dy in [-1, 0, 1]:
+                    if dx != 0 or dy != 0:  # Skip the center position
+                        self.cost_surface.blit(outline_surface, (dx + 2, dy + 2))
+            
+            # Draw the main text on top
+            self.cost_surface.blit(text_surface, (2, 2))
+            
+        return self.cost_surface
+    
     def draw(self, screen: pygame.Surface) -> None:
         """
         Draws the edge on the given screen based on its state.
@@ -124,6 +156,46 @@ class Edge:
         color = self.state.get_color("graph")
         line_width = 3 if self.state.is_path() else 2
         pygame.draw.line(screen, color, (self.node1.x, self.node1.y), (self.node2.x, self.node2.y), line_width)
+
+    def draw_cost(self, screen: pygame.Surface) -> None:
+        """
+        Draws the cost of the edge on the screen.
+        This method retrieves the cost surface and blits it onto the screen at the edge's center.
+
+        :param screen: The screen on which to draw the cost.
+        """
+        surface = self.get_cost_surface()
+        
+        # Calculate the midpoint of the edge
+        mid_x = (self.node1.x + self.node2.x) // 2
+        mid_y = (self.node1.y + self.node2.y) // 2
+        
+        # Calculate edge direction and perpendicular offset for better positioning
+        dx = self.node2.x - self.node1.x
+        dy = self.node2.y - self.node1.y
+        edge_length = (dx*dx + dy*dy) ** 0.5
+        
+        if edge_length > 0:
+            # Normalize the perpendicular vector (rotate 90 degrees)
+            perp_x = -dy / edge_length
+            perp_y = dx / edge_length
+            
+            # Offset the text slightly away from the edge line
+            offset_distance = 12  # pixels away from the edge
+            text_x = mid_x + perp_x * offset_distance
+            text_y = mid_y + perp_y * offset_distance
+        else:
+            text_x = mid_x
+            text_y = mid_y
+        
+        # Draw a small background rectangle for better readability
+        text_rect = surface.get_rect(center=(int(text_x), int(text_y)))
+        background_rect = text_rect.inflate(4, 2)  # Add some padding
+        pygame.draw.rect(screen, Color.WHITE, background_rect)
+        pygame.draw.rect(screen, Color.BLACK, background_rect, 1)  # Border
+        
+        # Draw the text
+        screen.blit(surface, text_rect)
         
 class Graph:
     """
@@ -135,14 +207,18 @@ class Graph:
     :type nodes: list[GraphNode]
     :param edges: A list of Edge instances representing the edges in the graph.
     :type edges: list[Edge]
+    :param customizable_cost: A boolean indicating if the graph allows customizable costs for edges.
+    :type customizable_cost: bool
     """
     nodes: list[GraphNode]
     edges: list[Edge]
+    customizable_cost: bool
     
-    def __init__(self) -> None:
+    def __init__(self, customizable_cost: bool = False) -> None:
         """ Constructor for Graph. Initializes an empty graph. """
         self.nodes = []
         self.edges = []
+        self.customizable_cost = customizable_cost
 
     def can_place_node(self, x: int, y: int) -> bool:
         """
@@ -269,11 +345,16 @@ class Graph:
         :param screen: The pygame screen where the graph will be drawn.
         :type screen: pygame.Surface
         """
+            
         for edge in self.edges:
             edge.draw(screen)
-
+            
         for node in self.nodes:
             node.draw(screen)
+            
+        if self.customizable_cost:
+            for edge in self.edges:
+                edge.draw_cost(screen)
         
 
     def change_state(self, node: GraphNode, new_state: State) -> None:

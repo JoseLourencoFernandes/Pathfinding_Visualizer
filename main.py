@@ -8,6 +8,7 @@ from screens.main_menu import MainMenuScreen
 from screens.grid_2d import Grid2DScreen
 from screens.grid_2d import Grid2DWeightedScreen
 from screens.graph_screen import GraphScreen
+from screens.graph_screen import GraphWeightedScreen
 
 def main():
     """
@@ -31,7 +32,8 @@ def main():
         Screen.MAIN_MENU: MainMenuScreen(screen, app_state),
         Screen.GRID_2D: Grid2DScreen(screen, app_state),
         Screen.GRID_2D_WEIGHTED: Grid2DWeightedScreen(screen, app_state),
-        Screen.GRAPH: GraphScreen(screen, app_state)
+        Screen.GRAPH: GraphScreen(screen, app_state),
+        Screen.GRAPH_WEIGHTED: GraphWeightedScreen(screen, app_state)  
     }
     
     # Define the previous screen to track the last active screen
@@ -59,10 +61,10 @@ def main():
             # Handle events for the currently active screen
             screens[app_state.current_screen].handle_event(event)
             
-            # Handle screen transitions and ignore drag state
+            # Handle screen transitions and block action state
             if app_state.current_screen != previous_screen:
-                if app_state.current_screen in (Screen.GRID_2D, Screen.GRID_2D_WEIGHTED, Screen.GRAPH):
-                    screens[app_state.current_screen].local_app_state.ignore_drag = True
+                if app_state.current_screen in (Screen.GRID_2D, Screen.GRID_2D_WEIGHTED, Screen.GRAPH, Screen.GRAPH_WEIGHTED):
+                    screens[app_state.current_screen].local_app_state.block_action = True
                 previous_screen = app_state.current_screen
         
         # If user as requested to quit, exit the loop

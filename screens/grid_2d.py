@@ -104,6 +104,11 @@ class BaseGridScreen(ScreenInterface, ButtonPanelMixin):
         :param event: The Pygame event to handle.
         :type event: pygame.event.Event
         """     
+        # Block all mouse clicks until user releases mouse button after entering screen
+        if self.local_app_state.block_action:
+            if event.type == pygame.MOUSEBUTTONUP:
+                self.local_app_state.block_action = False
+            return
         
         # Get the mouse position and check if it's within the grid
         mouse_pos, pos_x, pos_y, in_grid, over_button = self._get_mouse_position()
@@ -139,14 +144,14 @@ class BaseGridScreen(ScreenInterface, ButtonPanelMixin):
             for idx, button in enumerate(self.buttons):
                 if button.is_clicked(mouse_pos):
                     self.handle_button_click(idx)
-            
-        # Ensure that when entering the grid2d screen, the ignore_drag flag is set to False              
+
+        # Ensure that when entering the grid2d screen, the block_action flag is set to False
         elif event.type == pygame.MOUSEBUTTONUP:
-            self.local_app_state.ignore_drag = False 
+            self.local_app_state.block_action = False 
             
         # Check for mouse button release if the algorithm is not running
         elif event.type == pygame.MOUSEBUTTONUP and not self.local_app_state.running_algorithm:
-            self.local_app_state.ignore_drag = False
+            self.local_app_state.block_action = False
 
 
     def run(self) -> None:
@@ -229,7 +234,7 @@ class BaseGridScreen(ScreenInterface, ButtonPanelMixin):
         self.grid.change_state(pos_y, pos_x, state_enum)
         self.local_app_state.set_goal_mode = False
         self.local_app_state.set_start_mode = False
-        self.local_app_state.ignore_drag = True
+        self.local_app_state.block_action = True
 
 
     def _reset_button(self) -> None:
@@ -266,7 +271,7 @@ class BaseGridScreen(ScreenInterface, ButtonPanelMixin):
         # Deselect start and goal modes if any button is clicked
         self.local_app_state.set_start_mode = False
         self.local_app_state.set_goal_mode = False
-        self.local_app_state.ignore_drag = True
+        self.local_app_state.block_action = True
 
         if idx == 0: # Activate start mode
             # If an algorithm has been runned before, reset the grid
@@ -343,12 +348,12 @@ class BaseGridScreen(ScreenInterface, ButtonPanelMixin):
         # Get the mouse state
         mouse_state = pygame.mouse.get_pressed()
         # Handle mouse dragging action
-        if in_grid and not over_button and mouse_state[0] and not self.local_app_state.ignore_drag:
+        if in_grid and not over_button and mouse_state[0] and not self.local_app_state.block_action:
             # Reset the grid if an algorithm has been runned before
             if self.local_app_state.runned_algorithm:
                 self._reset_button()  
             self.grid.change_state(pos_y, pos_x, State.DEACTIVATED)
-        elif in_grid and not over_button and mouse_state[2] and not self.local_app_state.ignore_drag:
+        elif in_grid and not over_button and mouse_state[2] and not self.local_app_state.block_action:
             # Reset the grid if an algorithm has been runned before
             if self.local_app_state.runned_algorithm:
                 self._reset_button()  

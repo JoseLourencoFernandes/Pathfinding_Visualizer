@@ -17,19 +17,16 @@ from definitions.graph_constants import  GRAPH_AREA_MARGIN, GRAPH_AREA_SIZE, SAF
 from screens.button_panel_mixin import ButtonPanelMixin
 from classes.graph import euclidean_graph_heuristic
 
-class GraphScreen(ScreenInterface, ButtonPanelMixin):
+class BaseGraphScreen(ScreenInterface, ButtonPanelMixin):
     
 
-    def __init__(self, screen, app_state):
+    def __init__(self, screen, app_state, customizable_cost: bool = False):
         super().__init__(screen, app_state)
         
-        self.local_app_state = app_state.graph_app_state
+        self.local_app_state = app_state.graph_app_state if not customizable_cost else app_state.graph_weighted_app_state
         
-        self.graph = Graph()
+        self.graph = Graph(customizable_cost=customizable_cost)
         
-        
-        #TEST GRAPH
-        self.graph = Graph()
         # Create nodes
         node1 = self.graph.add_node(150, 200)
         node2 = self.graph.add_node(300, 150)
@@ -80,6 +77,12 @@ class GraphScreen(ScreenInterface, ButtonPanelMixin):
         
     def handle_event(self, event):
         
+        # Block all mouse clicks until user releases mouse button after entering screen
+        if self.local_app_state.block_action:
+            if event.type == pygame.MOUSEBUTTONUP:
+                self.local_app_state.block_action = False
+            return
+        
         mouse_x, mouse_y = pygame.mouse.get_pos()
         if event.type == pygame.MOUSEBUTTONDOWN:
         
@@ -121,12 +124,11 @@ class GraphScreen(ScreenInterface, ButtonPanelMixin):
                 if node and event.button == 1 and not (self.local_app_state.set_start_mode or self.local_app_state.set_goal_mode):
                     # Start dragging the node
                     self.drag_start_node = node
-                    self.dragging = True   
-                    
-        # Ensure that when entering the screen, the ignore_drag flag is set to False              
+                    self.dragging = True
+
+        # Ensure that when entering the screen, the ignore_drag flag is set to False
         elif event.type == pygame.MOUSEBUTTONUP:
-            self.local_app_state.ignore_drag = False
-            mouse_x, mouse_y = pygame.mouse.get_pos()
+            self.local_app_state.block_action = False
             if self.dragging and self.drag_start_node:
                 node = self.graph.get_node(mouse_x, mouse_y)
                 if event.button == 3 and node:
@@ -149,7 +151,7 @@ class GraphScreen(ScreenInterface, ButtonPanelMixin):
         # Deselect start and goal modes if any button is clicked
         self.local_app_state.set_start_mode = False
         self.local_app_state.set_goal_mode = False
-        self.local_app_state.ignore_drag = True
+        self.local_app_state.block_action = True
         
         if idx == 0:
             # Set Start Mode
@@ -278,3 +280,25 @@ class GraphScreen(ScreenInterface, ButtonPanelMixin):
                 button.draw(self.screen, self.font, active=self.local_app_state.running_algorithm)
         
         self.back_button.draw(self.screen, self.font)
+        
+
+class GraphScreen(BaseGraphScreen):
+    """
+    GraphScreen class that extends BaseGraphScreen to provide a specific implementation for graph visualization.
+    This class handles the drawing and interaction logic for the graph screen.
+    """
+    
+    def __init__(self, screen, app_state):
+        super().__init__(screen, app_state, customizable_cost = False)
+        self.buttons = self.create_default_buttons(object="Node", include_maze_button=False)
+        
+
+class GraphWeightedScreen(BaseGraphScreen):
+    """
+    GraphWeightedScreen class that extends BaseGraphScreen to provide a specific implementation for weighted graph visualization.
+    This class handles the drawing and interaction logic for the weighted graph screen.
+    """
+    
+    def __init__(self, screen, app_state):
+        super().__init__(screen, app_state, customizable_cost = True)
+        self.buttons = self.create_default_buttons(object="Node", include_maze_button=False)

@@ -52,6 +52,16 @@ class MainMenuScreen(ScreenInterface):
                 ),
                 "Graph",
                 Color.LIGHTCORAL
+            ),
+            Button(
+                pygame.Rect(
+                    MENU_BUTTON_X,
+                    MENU_BUTTON_Y + 3 * (MENU_BUTTON_HEIGHT + MENU_BUTTON_SPACING),
+                    MENU_BUTTON_WIDTH,
+                    MENU_BUTTON_HEIGHT
+                ),
+                "Graph Weighted",
+                Color.LIGHTCORAL
             )
         ]
 
@@ -77,6 +87,8 @@ class MainMenuScreen(ScreenInterface):
                         self.app_state.current_screen = Screen.GRID_2D_WEIGHTED
                     elif idx == 2:
                         self.app_state.current_screen = Screen.GRAPH
+                    elif idx == 3:
+                        self.app_state.current_screen = Screen.GRAPH_WEIGHTED
 
     def run(self) -> None:
         # No specific logic to run for the main menu

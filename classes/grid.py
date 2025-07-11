@@ -59,6 +59,7 @@ class Square:
         Returns the cost surface for the square, rendering it if not already cached.
 
         :return: The surface containing the cost text.
+        :rtype: pygame.Surface
         """
         if self.cost_surface is None:
             font_size = max(10, int(self.size * 0.9))  # Font size is 90% of the square size, at least 10 pixels
@@ -85,6 +86,7 @@ class Square:
         This method retrieves the cost surface and blits it onto the screen at the square's center.
 
         :param screen: The screen on which to draw the cost.
+        :type screen: pygame.Surface
         """
         surface = self.get_cost_surface()
         text_rect = surface.get_rect(center=(self.x + self.size // 2, self.y + self.size // 2))
@@ -244,8 +246,7 @@ class Grid:
                 target_square.change_state(new_state)
                 
             case State.ACTIVATED:
-                if not target_square.state.is_start():
-                    target_square.change_state(new_state)
+                target_square.change_state(new_state)
                     
             case _:
                 target_square.change_state(new_state)

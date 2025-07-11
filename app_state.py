@@ -14,17 +14,21 @@ class GlobalAppState:
     :type grid2d_weighted_app_state: Grid2DAppState
     :param graph_app_state: The state of the graph application.
     :type graph_app_state: GraphAppState
+    :param graph_weighted_app_state: The state of the weighted graph application.
+    :type graph_weighted_app_state: GraphAppState
     """
     current_screen: Screen
     grid2d_app_state: 'Grid2DAppState'
     grid2d_weighted_app_state: 'Grid2DAppState'
     graph_app_state: 'GraphAppState'
+    graph_weighted_app_state: 'GraphAppState' 
     
     def __init__(self):
         self.current_screen = Screen.MAIN_MENU
         self.grid2d_app_state = Grid2DAppState()
         self.grid2d_weighted_app_state = Grid2DAppState()
         self.graph_app_state = GraphAppState()
+        self.graph_weighted_app_state = GraphAppState()  # Assuming a similar state for weighted graphs
 
 class Grid2DAppState:
     """
@@ -35,8 +39,8 @@ class Grid2DAppState:
     :type set_start_mode: bool
     :param set_goal_mode: Indicates if the user is in goal mode.
     :type set_goal_mode: bool
-    :param ignore_drag: Flag to ignore mouse drag events.
-    :type ignore_drag: bool
+    :param block_action: Indicates if actions must be blocked.
+    :type block_action: bool
     :param running_algorithm: Indicates if an algorithm is currently running.
     :type running_algorithm: bool
     :param grid_full_reset: Indicates if the grid has to be fully reseted.
@@ -50,7 +54,7 @@ class Grid2DAppState:
     """
     set_start_mode: bool
     set_goal_mode: bool
-    ignore_drag: bool
+    block_action: bool
     running_algorithm: bool
     grid_full_reset: bool
     start_time: float
@@ -60,7 +64,7 @@ class Grid2DAppState:
     def __init__(self):
         self.set_start_mode = False 
         self.set_goal_mode = False
-        self.ignore_drag = False
+        self.block_action = False
         self.running_algorithm = False
         self.grid_full_reset = True
         self.start_time = None
@@ -76,8 +80,8 @@ class GraphAppState:
     :type set_start_mode: bool
     :param set_goal_mode: Indicates if the user is in goal mode.
     :type set_goal_mode: bool
-    :param ignore_drag: Flag to ignore mouse drag events.
-    :type ignore_drag: bool
+    :param block_action: Indicates if actions must be blocked.
+    :type block_action: bool
     :param running_algorithm: Indicates if an algorithm is currently running.
     :type running_algorithm: bool
     :param grid_full_reset: Indicates if the grid has to be fully reseted.
@@ -91,7 +95,7 @@ class GraphAppState:
     """
     set_start_mode: bool
     set_goal_mode: bool
-    ignore_drag: bool
+    block_action: bool
     running_algorithm: bool
     grid_full_reset: bool
     start_time: float
@@ -101,7 +105,7 @@ class GraphAppState:
     def __init__(self):
         self.set_start_mode = False
         self.set_goal_mode = False
-        self.ignore_drag = False
+        self.block_action = False
         self.running_algorithm = False
         self.grid_full_reset = True
         self.start_time = None
