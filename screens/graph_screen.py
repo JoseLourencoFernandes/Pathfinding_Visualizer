@@ -74,6 +74,7 @@ class BaseGraphScreen(ScreenInterface, ButtonPanelMixin):
         # Create buttons
         self.buttons = self.create_default_buttons(object="Node", include_maze_button=False)
         
+        self.graph_reset_state = copy.deepcopy(self.graph)
         
     def handle_event(self, event):
         
@@ -85,7 +86,11 @@ class BaseGraphScreen(ScreenInterface, ButtonPanelMixin):
         
         mouse_x, mouse_y = pygame.mouse.get_pos()
         if event.type == pygame.MOUSEBUTTONDOWN:
-        
+            
+            # Check if cost display was clicked
+            if self.graph.customizable_cost and self.graph.handle_cost_click(mouse_x, mouse_y):
+                return  # Cost click handled
+            
             if self.back_button.is_clicked((mouse_x, mouse_y)):
                 self.app_state.current_screen = Screen.MAIN_MENU
                 return
@@ -93,12 +98,13 @@ class BaseGraphScreen(ScreenInterface, ButtonPanelMixin):
             for idx, button in enumerate(self.buttons):
                     if button.is_clicked((mouse_x, mouse_y)):
                         self.handle_button_click(idx)
+                        return
                         
             node = self.graph.get_node(mouse_x, mouse_y)
             
             if node:
                 if event.button == 1:  # Left click: set start/goal or select
-                        # Set Start Mode
+                    # Set Start Mode
                     if self.local_app_state.set_start_mode:
                         # Clear previous start
                         for n in self.graph.nodes:
@@ -107,6 +113,7 @@ class BaseGraphScreen(ScreenInterface, ButtonPanelMixin):
                         node.change_state(State.START)
                         self.local_app_state.set_start_mode = False
                         self.local_app_state.set_goal_mode = False
+                        return
 
                     # Set Goal Mode
                     elif self.local_app_state.set_goal_mode:
@@ -115,16 +122,14 @@ class BaseGraphScreen(ScreenInterface, ButtonPanelMixin):
                                 n.change_state(State.ACTIVATED)
                         node.change_state(State.GOAL)
                         self.local_app_state.set_goal_mode = False
-                        self.local_app_state.set_start_mode = False   
-                
-                self.local_app_state.set_start_mode = False
-                self.local_app_state.set_goal_mode = False
-                
-    
-                if node and event.button == 1 and not (self.local_app_state.set_start_mode or self.local_app_state.set_goal_mode):
-                    # Start dragging the node
-                    self.drag_start_node = node
-                    self.dragging = True
+                        self.local_app_state.set_start_mode = False 
+                        return  
+            
+                    else:          
+                        self.local_app_state.set_start_mode = False
+                        self.local_app_state.set_goal_mode = False
+                        self.drag_start_node = node
+                        self.dragging = True
 
         # Ensure that when entering the screen, the ignore_drag flag is set to False
         elif event.type == pygame.MOUSEBUTTONUP:
@@ -132,19 +137,38 @@ class BaseGraphScreen(ScreenInterface, ButtonPanelMixin):
             if self.dragging and self.drag_start_node:
                 node = self.graph.get_node(mouse_x, mouse_y)
                 if event.button == 3 and node:
+                    if self.local_app_state.runned_algorithm:
+                        self._reset_button()
                     self.graph.remove_node(self.drag_start_node)  
                 if event.button == 1 and node and node != self.drag_start_node:
                     # Add edge between drag_start_node and node
                     self.graph.add_edge(self.drag_start_node, node)
+                    if self.local_app_state.runned_algorithm:
+                        self._reset_button()
                 self.drag_start_node = None
                 self.dragging = False             
                 
             else:
-                if event.button == 1  and (SAFE_MIN_AREA <= mouse_x <= SAFE_MAX_AREA and
-                SAFE_MIN_AREA + 10 <= mouse_y <= SAFE_MAX_AREA and
-                self.graph.can_place_node(mouse_x, mouse_y)):
+                                
+                if self.local_app_state.runned_algorithm:
+                    # If an algorithm has been runned before, reset the grid
+                    self._reset_button()
+                # Only add node if not in any special mode and not clicking on existing elements
+                if (event.button == 1 and 
+                    not self.local_app_state.set_start_mode and 
+                    not self.local_app_state.set_goal_mode and
+                    not self.graph.is_editing_cost() and 
+                    SAFE_MIN_AREA <= mouse_x <= SAFE_MAX_AREA and
+                    SAFE_MIN_AREA + 10 <= mouse_y <= SAFE_MAX_AREA and
+                    self.graph.can_place_node(mouse_x, mouse_y)):
                     self.graph.add_node(mouse_x, mouse_y)
-                    
+
+                
+        elif event.type == pygame.KEYDOWN:
+            # Handle keyboard input for cost editing
+            if self.graph.customizable_cost and event.unicode:
+                self.graph.handle_key_input(event.unicode)
+                
                 
     def handle_button_click(self, idx):
         
@@ -155,15 +179,21 @@ class BaseGraphScreen(ScreenInterface, ButtonPanelMixin):
         
         if idx == 0:
             # Set Start Mode
+            # If an algorithm has been runned before, reset the grid
+            if self.local_app_state.runned_algorithm:
+                self._reset_button()
             self.local_app_state.set_start_mode = not self.local_app_state.set_start_mode
             self.local_app_state.set_goal_mode = False
         elif idx == 1:
             # Set Goal Mode
+            # If an algorithm has been runned before, reset the grid
+            if self.local_app_state.runned_algorithm:
+                self._reset_button()
             self.local_app_state.set_goal_mode = not self.local_app_state.set_goal_mode
             self.local_app_state.set_start_mode = False
         elif idx == 7:
             # Reset Graph
-            self.graph = Graph()
+            self._reset_button()
             
         else: # Algorithm buttons
             # Manage the state of the application
@@ -188,6 +218,28 @@ class BaseGraphScreen(ScreenInterface, ButtonPanelMixin):
             elif idx == 6:
                 self.algorithm = GreedyBestFirstAlgorithm(self.graph, self.graph.get_neighbors, euclidean_graph_heuristic)
 
+    def _reset_button(self) -> None:
+    # Reset all nodes to activated state (except start and goal)
+        for node in self.graph.nodes:
+            if not node.state.is_start() and not node.state.is_goal():
+                node.change_state(State.ACTIVATED)
+        
+        # Reset all edges to activated state
+        for edge in self.graph.edges:
+            edge.state = State.ACTIVATED
+        
+        # Reset application state
+        self.local_app_state.runned_algorithm = False
+        self.local_app_state.running_algorithm = False
+        
+        # Reset drag state
+        self.drag_start_node = None
+        self.dragging = False
+        
+        # Clear any cost editing state
+        if hasattr(self.graph, 'editing_edge') and self.graph.editing_edge:
+            self.graph.editing_edge.stop_editing_cost()
+            self.graph.editing_edge = None
 
     def run(self):
         

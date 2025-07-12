@@ -16,3 +16,4 @@ class Color:
     ORANGE = (255, 165, 0)
     TANGERINE = (255,178,102)
     LIGHTCORAL = (127,255,212)
+    BLUE = (0, 0, 255)

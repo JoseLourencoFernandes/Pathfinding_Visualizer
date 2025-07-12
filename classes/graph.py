@@ -113,6 +113,8 @@ class Edge:
         self.cost = cost
         self.state = State.ACTIVATED
         self.cost_surface = None  # Surface to hold the cost text
+        self.cost_rect = None
+        self.editing_cost = False
 
     def get_cost_surface(self) -> pygame.Surface:
         """
@@ -188,14 +190,45 @@ class Edge:
             text_x = mid_x
             text_y = mid_y
         
-        # Draw a small background rectangle for better readability
+        # Store the cost rectangle for click detection
         text_rect = surface.get_rect(center=(int(text_x), int(text_y)))
-        background_rect = text_rect.inflate(4, 2)  # Add some padding
-        pygame.draw.rect(screen, Color.WHITE, background_rect)
-        pygame.draw.rect(screen, Color.BLACK, background_rect, 1)  # Border
+        self.cost_rect = text_rect
+        
+        # Draw background
+        background_rect = text_rect.inflate(4, 2)
+        
+        
+        # Change background color if editing
+        if self.editing_cost:
+            pygame.draw.rect(screen, Color.LIGHTBLUE, background_rect)
+            pygame.draw.rect(screen, Color.BLUE, background_rect, 2)
+        else:
+            pygame.draw.rect(screen, Color.WHITE, background_rect)
+            pygame.draw.rect(screen, Color.BLACK, background_rect, 1)
         
         # Draw the text
         screen.blit(surface, text_rect)
+
+    def is_cost_clicked(self, mouse_x: int, mouse_y: int) -> bool:
+        """Check if the cost display was clicked."""
+        if self.cost_rect:
+            return self.cost_rect.collidepoint(mouse_x, mouse_y)
+        return False
+        
+    def start_editing_cost(self) -> None:
+        """Start editing the cost."""
+        self.editing_cost = True
+
+    def stop_editing_cost(self) -> None:
+        """Stop editing the cost."""
+        self.editing_cost = False
+        
+    def set_cost_from_key(self, key_char: str) -> None:
+        """Set cost from keyboard input (1-9 only)."""
+        if key_char.isdigit() and '1' <= key_char <= '9':
+            self.cost = int(key_char)
+            self.cost_surface = None  # Refresh the surface
+            self.editing_cost = False  # Stop editing after setting
         
 class Graph:
     """
@@ -219,6 +252,7 @@ class Graph:
         self.nodes = []
         self.edges = []
         self.customizable_cost = customizable_cost
+        self.editing_edge = None
 
     def can_place_node(self, x: int, y: int) -> bool:
         """
@@ -449,6 +483,39 @@ class Graph:
         edge = self.get_edge(node1, node2)
         if edge:
             edge.state = State.FRONTIER
+            
+    def handle_cost_click(self, mouse_x: int, mouse_y: int) -> bool:
+        """Check if any cost display was clicked."""
+        if not self.customizable_cost:
+            return False
+            
+        for edge in self.edges:
+            if edge.is_cost_clicked(mouse_x, mouse_y):
+                # Stop editing previous edge
+                if self.editing_edge:
+                    self.editing_edge.stop_editing_cost()
+                
+                # Start editing this edge
+                edge.start_editing_cost()
+                self.editing_edge = edge
+                return True
+        
+        # If clicked elsewhere, stop editing
+        if self.editing_edge:
+            self.editing_edge.stop_editing_cost()
+            self.editing_edge = None
+        
+        return False
+
+    def handle_key_input(self, key_char: str) -> None:
+        """Handle keyboard input for cost editing."""
+        if self.editing_edge:
+            self.editing_edge.set_cost_from_key(key_char)
+            self.editing_edge = None  # Stop editing after setting cost
+            
+    def is_editing_cost(self) -> bool:
+        """Check if any edge is currently being edited."""
+        return self.editing_edge is not None
 
 def euclidean_graph_heuristic(node: GraphNode, goal: GraphNode) -> float:
     """ Calculates the Euclidean distance between a node and the goal node."""
