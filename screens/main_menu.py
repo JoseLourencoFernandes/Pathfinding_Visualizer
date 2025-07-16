@@ -101,7 +101,7 @@ class MainMenuScreen(ScreenInterface):
         self.screen.fill(Color.BLACK)
         # Draw title
         title_surface = self.title_font.render("Pathfinding Visualizer", True, Color.TOMATO)
-        title_rect = title_surface.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 3))
+        title_rect = title_surface.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 3 - 50))
         self.screen.blit(title_surface, title_rect)
         # Draw subtitle
         subtitle_font = pygame.font.SysFont(None, 28)

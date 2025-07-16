@@ -26,7 +26,7 @@ class BaseGraphScreen(ScreenInterface, ButtonPanelMixin):
         self.local_app_state = app_state.graph_app_state if not customizable_cost else app_state.graph_weighted_app_state
         
         self.graph = Graph(customizable_cost=customizable_cost)
-        
+        """
         # Create nodes
         node1 = self.graph.add_node(150, 200)
         node2 = self.graph.add_node(300, 150)
@@ -54,10 +54,10 @@ class BaseGraphScreen(ScreenInterface, ButtonPanelMixin):
         self.graph.add_edge(node1, node8)
         self.graph.add_edge(node3, node6)
         self.graph.add_edge(node4, node7)
+        """
         
         
-        
-        
+        self.local_app_state.set_start_mode = False
         self.drag_start_node = None
         self.dragging = False
         
@@ -74,7 +74,6 @@ class BaseGraphScreen(ScreenInterface, ButtonPanelMixin):
         # Create buttons
         self.buttons = self.create_default_buttons(object="Node", include_maze_button=False)
         
-        self.graph_reset_state = copy.deepcopy(self.graph)
         
     def handle_event(self, event):
         
@@ -200,6 +199,9 @@ class BaseGraphScreen(ScreenInterface, ButtonPanelMixin):
             if self.graph.get_start() is None or self.graph.get_goal() is None:
                 return
 
+            if self.local_app_state.runned_algorithm:
+                # If an algorithm has been runned before, reset the grid
+                self._reset_button()
 
             # Set the application state
             self.local_app_state.runned_algorithm = True
@@ -219,14 +221,24 @@ class BaseGraphScreen(ScreenInterface, ButtonPanelMixin):
                 self.algorithm = GreedyBestFirstAlgorithm(self.graph, self.graph.get_neighbors, euclidean_graph_heuristic)
 
     def _reset_button(self) -> None:
-    # Reset all nodes to activated state (except start and goal)
-        for node in self.graph.nodes:
-            if not node.state.is_start() and not node.state.is_goal():
-                node.change_state(State.ACTIVATED)
-        
-        # Reset all edges to activated state
-        for edge in self.graph.edges:
-            edge.state = State.ACTIVATED
+        # Two-level reset system        
+        if not self.local_app_state.grid_full_reset:
+            # First reset - only reset visited/frontier nodes and edges
+            for node in self.graph.nodes:
+                if node.state == State.VISITED or node.state == State.FRONTIER or node.state == State.PATH:
+                    node.change_state(State.ACTIVATED)
+            
+            for edge in self.graph.edges:
+                if edge.state == State.VISITED or edge.state == State.FRONTIER or edge.state == State.PATH:
+                    edge.change_state(State.ACTIVATED)
+
+            self.local_app_state.grid_full_reset = True
+        else:
+            # Second reset - full reset (except start and goal)
+            self.graph.nodes.clear()
+            self.graph.edges.clear()
+            if self.local_app_state.runned_algorithm:    
+                self.local_app_state.grid_full_reset = False
         
         # Reset application state
         self.local_app_state.runned_algorithm = False

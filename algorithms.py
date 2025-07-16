@@ -196,6 +196,9 @@ class DijkstraAlgorithm(Algorithm):
         if not self.heap or self.found:
             return False
         cost, _, node = heapq.heappop(self.heap)
+        if node.state.is_goal():
+            self.found = True
+            return True
         parent = self.parents.get(node)
         if parent is not None and hasattr(self.structure, "mark_edge_visited"):
             self.structure.mark_edge_visited(parent, node)
@@ -208,9 +211,7 @@ class DijkstraAlgorithm(Algorithm):
                     self.costs[neighbor] = new_cost
                     heapq.heappush(self.heap, (new_cost, next(self.counter), neighbor))
                     self.parents[neighbor] = node
-                    if neighbor.state.is_goal():
-                        self.found = True
-                    elif neighbor.state.is_activated():
+                    if neighbor.state.is_activated():
                         neighbor.change_state(State.FRONTIER)
                     if hasattr(self.structure, "mark_edge_frontier"):
                         self.structure.mark_edge_frontier(node, neighbor)
@@ -246,6 +247,9 @@ class AStarAlgorithm(Algorithm):
         if not self.heap or self.found:
             return False
         priority, _, node = heapq.heappop(self.heap)
+        if node.state.is_goal():
+            self.found = True
+            return True
         parent = self.parents.get(node)
         if parent is not None and hasattr(self.structure, "mark_edge_visited"):
             self.structure.mark_edge_visited(parent, node)
@@ -259,10 +263,8 @@ class AStarAlgorithm(Algorithm):
                     priority = new_cost + self.heuristic(neighbor, self.goal)
                     heapq.heappush(self.heap, (priority, next(self.counter), neighbor))
                     self.parents[neighbor] = node
-                    if neighbor.state.is_goal():
-                        self.found = True
-                    elif neighbor.state.is_activated():
-                        neighbor.change_state(State.FRONTIER)
+                    if neighbor.state.is_activated():
+                        neighbor.change_state(State.FRONTIER)  
                     if hasattr(self.structure, "mark_edge_frontier"):
                         self.structure.mark_edge_frontier(node, neighbor)
         return True
@@ -293,6 +295,9 @@ class GreedyBestFirstAlgorithm(Algorithm):
         if not self.heap or self.found:
             return False
         _, _, node = heapq.heappop(self.heap)
+        if node.state.is_goal():
+            self.found = True
+            return True
         parent = self.parents.get(node)
         if parent is not None and hasattr(self.structure, "mark_edge_visited"):
             self.structure.mark_edge_visited(parent, node)
@@ -303,9 +308,7 @@ class GreedyBestFirstAlgorithm(Algorithm):
                 heapq.heappush(self.heap, (self.heuristic(neighbor, self.goal), next(self.counter), neighbor))
                 self.visited.add(neighbor)
                 self.parents[neighbor] = node
-                if neighbor.state.is_goal():
-                    self.found = True
-                elif neighbor.state.is_activated():
+                if neighbor.state.is_activated():
                     neighbor.change_state(State.FRONTIER)
                 if hasattr(self.structure, "mark_edge_frontier"):
                     self.structure.mark_edge_frontier(node, neighbor)

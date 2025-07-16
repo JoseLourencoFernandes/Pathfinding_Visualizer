@@ -230,6 +230,21 @@ class Edge:
             self.cost_surface = None  # Refresh the surface
             self.editing_cost = False  # Stop editing after setting
         
+    def change_state(self, new_state: State) -> None:
+        """
+        Changes the state of the edge to a new state.
+        
+        :param new_state: The new state to set for the edge.
+        :type new_state: State
+        
+        :raises ValueError: If new_state is not an instance of State.
+        :raises TypeError: If new_state is not an instance of State
+        """
+        if not isinstance(new_state, State):
+            raise TypeError("new_state must be an instance of State")
+
+        self.state = new_state
+        
 class Graph:
     """
     Represents a graph structure consisting of nodes and edges.
@@ -391,7 +406,7 @@ class Graph:
                 edge.draw_cost(screen)
         
 
-    def change_state(self, node: GraphNode, new_state: State) -> None:
+    def change_node_state(self, node: GraphNode, new_state: State) -> None:
         """
         Changes the state of a node in the graph.
 
@@ -404,6 +419,20 @@ class Graph:
             node.change_state(new_state)
         else:
             raise ValueError("Node not found in the graph")
+
+    def change_edge_state(self, edge: Edge, new_state: State) -> None:
+        """
+        Changes the state of an edge in the graph.
+
+        :param edge: The Edge instance whose state will be changed.
+        :type edge: Edge
+        :param new_state: The new state to assign to the edge.
+        :type new_state: State
+        """
+        if edge in self.edges:
+            edge.change_state(new_state)
+        else:
+            raise ValueError("Edge not found in the graph")
 
     def get_start(self) -> GraphNode | None:
         """
