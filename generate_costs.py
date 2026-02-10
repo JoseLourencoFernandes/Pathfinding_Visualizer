@@ -37,4 +37,5 @@ if __name__ == "__main__":
         print("Error: min_cost must be less than max_cost.")
         sys.exit(1)
     
+    # main call
     main(size=args.size, min_cost=args.min_cost, max_cost=args.max_cost)    
